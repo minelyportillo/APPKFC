@@ -77,7 +77,7 @@ Las credenciales son públicas, de demostración y se almacenan en el navegador.
 
 ## Enlace publicado
 
-[Abrir la aplicación]
+[https://appkfc.vercel.app/login]
 
 ## Estructura principal
 
