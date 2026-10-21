@@ -4,6 +4,8 @@ import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency, formatDate, isValidPersonName } from '../services/storageService';
 
+const placeholderImg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="240"><rect width="100%" height="100%" fill="%23f3f3f3"/><text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="20" fill="%23a1a1aa">KFC</text></svg>';
+
 export default function CajeroDashboard() {
   const {
     products,
@@ -250,7 +252,8 @@ export default function CajeroDashboard() {
                       <img
                         src={cat.img}
                         alt={cat.name}
-                        style={{ height: '90px', width: '100%', objectFit: 'cover', borderRadius: '6px' }}
+                        className="kfc-category-img"
+                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = placeholderImg; }}
                       />
                     </div>
                   </div>
@@ -280,7 +283,12 @@ export default function CajeroDashboard() {
                     <div key={prod.id} className="col-6 col-md-4 col-lg-3">
                       <div className={`kfc-product-card justify-content-between ${sinStock ? 'opacity-50' : ''}`}>
                         <div>
-                          <img src={prod.img} alt={prod.nombre} className="kfc-product-img" />
+                          <img
+                            src={prod.img}
+                            alt={prod.nombre}
+                            className="kfc-product-img"
+                            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = placeholderImg; }}
+                          />
                           <div className="fw-bold small text-truncate" title={prod.nombre}>{prod.nombre}</div>
                           <div className="d-flex justify-content-between align-items-center my-1">
                             <span className="text-danger fw-bold fs-6">{formatCurrency(prod.precio)}</span>
@@ -385,7 +393,7 @@ export default function CajeroDashboard() {
               <tbody>
                 {pedidosFiltrados.length === 0 ? (
                   <tr>
-                    <td colspan="8" className="text-center py-4 text-muted">
+                    <td colSpan="8" className="text-center py-4 text-muted">
                       No hay pedidos con el filtro "{filtroEstado}".
                     </td>
                   </tr>
@@ -581,3 +589,4 @@ export default function CajeroDashboard() {
     </div>
   );
 }
+
