@@ -1,0 +1,409 @@
+@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Montserrat:wght@400;500;600;700;800;900&family=Playball&display=swap');
+
+:root {
+  --kfc-red: #E4002B;
+  --kfc-red-hover: #c40024;
+  --kfc-cream-bg: #F5E8D3;
+  --kfc-cream-card: #FAF4EB;
+  --kfc-cream-light: #FBF7F0;
+  --kfc-gray-input: #D9D9D9;
+  --kfc-gray-text: #666666;
+  --kfc-btn-dark: #525252;
+  --kfc-btn-dark-hover: #3d3d3d;
+  --kfc-border: #E8D9C5;
+  --kfc-shadow-sm: 0 4px 15px rgba(0, 0, 0, 0.06);
+  --kfc-shadow-md: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--kfc-cream-bg);
+  font-family: 'Montserrat', sans-serif;
+  color: #1a1a1a;
+  min-height: 100vh;
+}
+
+.kfc-script-font {
+  font-family: 'Playball', 'Great Vibes', cursive;
+  color: var(--kfc-red);
+}
+
+.kfc-app-container {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.kfc-main-content {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.kfc-header-bar {
+  background-color: var(--kfc-red);
+  min-height: 80px;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 20px rgba(228, 0, 43, 0.25);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.kfc-header-inner {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kfc-header-logo-badge {
+  background: #fff;
+  padding: 4px;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  border: 2px solid #fff;
+  transition: transform 0.2s;
+}
+
+.kfc-header-logo-badge:hover {
+  transform: scale(1.05);
+}
+
+.kfc-header-logo-badge img {
+  height: 50px;
+  width: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.kfc-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.kfc-header-link {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1rem;
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  transition: background-color 0.2s, opacity 0.2s;
+  display: inline-flex;
+  align-items: center;
+}
+
+.kfc-header-link:hover {
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.kfc-auth-card {
+  width: 100%;
+  max-width: 500px;
+  margin: 2rem auto;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: var(--kfc-shadow-md);
+  border: 2px solid var(--kfc-border);
+  overflow: hidden;
+}
+
+@media (min-width: 992px) {
+  .kfc-auth-wrapper-desktop {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 100px);
+    padding: 2rem 1rem;
+  }
+
+  .kfc-auth-card-wide {
+    max-width: 960px;
+    display: flex;
+    flex-direction: row;
+    min-height: 580px;
+  }
+
+  .kfc-auth-side-banner {
+    flex: 1;
+    background: linear-gradient(135deg, var(--kfc-red) 0%, #a8001e 100%);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2rem;
+    text-align: center;
+  }
+
+  .kfc-auth-side-form {
+    flex: 1.2;
+    padding: 3rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
+
+.kfc-input-group {
+  background-color: var(--kfc-gray-input);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.1rem;
+  overflow: hidden;
+}
+
+.kfc-input-icon-box {
+  width: 50px;
+  height: 52px;
+  background-color: #EFEFEF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  color: #333;
+  border-right: 1px solid #ccc;
+  flex-shrink: 0;
+}
+
+.kfc-input-field {
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #222;
+}
+
+.kfc-input-field::placeholder {
+  color: #777;
+}
+
+.btn-kfc-dark {
+  background-color: var(--kfc-btn-dark);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.85rem;
+  font-weight: 700;
+  font-size: 1rem;
+  width: 100%;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn-kfc-dark:hover {
+  background-color: var(--kfc-btn-dark-hover);
+}
+
+.btn-kfc-dark:active {
+  transform: scale(0.99);
+}
+
+.btn-kfc-red {
+  background-color: var(--kfc-red);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.85rem;
+  font-weight: 700;
+  font-size: 1rem;
+  width: 100%;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-kfc-red:hover {
+  background-color: var(--kfc-red-hover);
+}
+
+.admin-action-btn-card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 2px solid var(--kfc-border);
+  box-shadow: var(--kfc-shadow-sm);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: #1a1a1a;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.admin-action-btn-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(228, 0, 43, 0.16);
+  border-color: var(--kfc-red);
+}
+
+.admin-card-tag {
+  background: var(--kfc-red);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1.1rem;
+  padding: 0.65rem 1rem;
+  width: 100%;
+  text-align: center;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+.kfc-product-card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid var(--kfc-border);
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--kfc-shadow-sm);
+  transition: transform 0.2s, box-shadow 0.2s;
+  height: 100%;
+}
+
+.kfc-product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--kfc-shadow-md);
+}
+
+.kfc-product-img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 10px;
+  background-color: #f7f7f7;
+  margin-bottom: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .kfc-product-img {
+    height: 160px;
+  }
+}
+
+.qty-counter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f1f1;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #ddd;
+}
+
+.qty-btn {
+  background: #777;
+  color: #fff;
+  border: none;
+  width: 32px;
+  height: 32px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+}
+
+.qty-btn:hover {
+  background: #444;
+}
+
+.qty-display {
+  width: 36px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.kfc-category-card {
+  background: #ffffff;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 2px solid var(--kfc-border);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  box-shadow: var(--kfc-shadow-sm);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.kfc-category-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--kfc-shadow-md);
+  border-color: var(--kfc-red);
+}
+
+.kfc-category-banner {
+  background: var(--kfc-red);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 0.6rem;
+  text-align: center;
+}
+
+.kfc-content-card {
+  background: #ffffff;
+  border-radius: 18px;
+  border: 2px solid var(--kfc-border);
+  padding: 1.5rem;
+  box-shadow: var(--kfc-shadow-sm);
+}
+
+@media (max-width: 576px) {
+  .kfc-header-bar {
+    min-height: 70px;
+    padding: 0.5rem 1rem;
+  }
+
+  .kfc-header-logo-badge img {
+    height: 38px;
+  }
+
+  .kfc-header-actions {
+    gap: 0.8rem;
+  }
+
+  .kfc-header-link {
+    font-size: 0.88rem;
+  }
+
+  .kfc-main-content {
+    padding: 1rem 0.75rem;
+  }
+}
