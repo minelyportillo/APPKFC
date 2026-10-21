@@ -4,7 +4,7 @@ import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency, formatDate, isValidPersonName } from '../services/storageService';
 
-const placeholderImg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="240"><rect width="100%" height="100%" fill="%23f3f3f3"/><text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="20" fill="%23a1a1aa">KFC</text></svg>';
+const placeholderImg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="240"><rect width="100%" height="100%" fill="%23f3f3f3"/><text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="18" fill="%23a1a1aa">KFC</text></svg>';
 
 export default function CajeroDashboard() {
   const {
@@ -26,12 +26,13 @@ export default function CajeroDashboard() {
   const [clienteNombre, setClienteNombre] = useState('');
   const [metodoPago, setMetodoPago] = useState('Efectivo');
 
+  // Imágenes de categoría alineadas con la identidad visual del menú KFC.
   const categories = [
-    { id: 'Combos', name: 'Combos', img: 'https://images.unsplash.com/photo-1513639776629-7b61b0ac49cb?w=400&q=80' },
-    { id: 'Boxes', name: 'Boxes', img: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=400&q=80' },
-    { id: 'Pollo', name: 'Pollo', img: 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=400&q=80' },
-    { id: 'Complementos', name: 'Complementos', img: 'https://images.unsplash.com/photo-1576107232684-1279f3908594?w=400&q=80' },
-    { id: 'Bebidas', name: 'Bebidas', img: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400&q=80' }
+    { id: 'Combos', name: 'Combos', img: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=900&q=80' },
+    { id: 'Boxes', name: 'Boxes', img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=900&q=80' },
+    { id: 'Pollo', name: 'Pollo', img: 'https://images.unsplash.com/photo-1586816001966-79b736744398?auto=format&fit=crop&w=900&q=80' },
+    { id: 'Complementos', name: 'Complementos', img: 'https://images.unsplash.com/photo-1576107232684-1279f3908594?auto=format&fit=crop&w=800&q=80' },
+    { id: 'Bebidas', name: 'Bebidas', img: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=800&q=80' }
   ];
 
   const categoryProducts = selectedCategory
@@ -40,7 +41,6 @@ export default function CajeroDashboard() {
 
   const metrics = calculateMetrics();
 
-  // Filtro de pedidos
   const pedidosFiltrados = orders.filter(o => {
     if (filtroEstado === 'todos') return true;
     if (filtroEstado === 'pendientes') return o.estado === 'pendiente';
@@ -152,7 +152,6 @@ export default function CajeroDashboard() {
       <Header title="Panel de Cajero" showCart={true} />
 
       <main className="kfc-main-content">
-        {/* Banner de Bienvenida y Acción Rápida */}
         <div className="welcome-banner mb-4">
           <div className="row align-items-center">
             <div className="col">
@@ -170,7 +169,6 @@ export default function CajeroDashboard() {
           </div>
         </div>
 
-        {/* Métricas Dinámicas */}
         <div className="row g-3 mb-4">
           <div className="col-12 col-sm-6 col-lg-3">
             <div className="stat-card">
@@ -221,7 +219,6 @@ export default function CajeroDashboard() {
           </div>
         </div>
 
-        {/* Catálogo de Productos para Armado de Pedidos */}
         <div className="kfc-content-card mb-4">
           <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
             <div>
@@ -329,7 +326,6 @@ export default function CajeroDashboard() {
           )}
         </div>
 
-        {/* Historial de Pedidos y Filtros CRUD */}
         <div className="kfc-content-card">
           <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 pb-2 border-bottom">
             <div>
@@ -486,7 +482,6 @@ export default function CajeroDashboard() {
           </div>
         </div>
 
-        {/* Modal de Pedido Rápido */}
         {showOrderModal && (
           <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
             <div className="modal-dialog modal-lg modal-dialog-centered">
@@ -589,4 +584,3 @@ export default function CajeroDashboard() {
     </div>
   );
 }
-
