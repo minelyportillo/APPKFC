@@ -1,14 +1,27 @@
 import { useState } from 'react';
+import Swal from 'sweetalert2';
 import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency, formatDate } from '../services/storageService';
 import MonthlySalesChart from '../components/MonthlySalesChart';
 
+const EMPTY_PRODUCT_FORM = {
+  id: '',
+  nombre: '',
+  categoria: 'Combos',
+  precio: '',
+  stock: '',
+  descripcion: '',
+  img: ''
+};
+
 export default function AdminDashboard() {
-  const { user, products, orders, getUsers, calculateMetrics } = useAuth();
+  const { user, products, orders, getUsers, calculateMetrics, addProduct, updateProduct, deleteProduct } = useAuth();
 
   const [activeTab, setActiveTab] = useState('menu');
   const [currentCategory, setCurrentCategory] = useState('Combos');
+  const [productForm, setProductForm] = useState(EMPTY_PRODUCT_FORM);
+  const [editingProductId, setEditingProductId] = useState(null);
 
   const usersList = getUsers();
   const metrics = calculateMetrics();
@@ -25,8 +38,126 @@ export default function AdminDashboard() {
     p => p.categoria.toLowerCase() === currentCategory.toLowerCase()
   );
 
-  // small SVG placeholder (data URL) used when product images fail to load
-  const placeholderImg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="40"><rect width="100%" height="100%" fill="%23f3f3f3"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="10" fill="%23888">no image</text></svg>';
+  // Este placeholder evita que la imagen quede rota si el enlace externo falla.
+  const placeholderImg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="40"><rect width="100%" height="100%" fill="%23f3f3f3"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="12" fill="%23a1a1aa">KFC</text></svg>';
+
+  const resetProductForm = () => {
+    setEditingProductId(null);
+    setProductForm(EMPTY_PRODUCT_FORM);
+  };
+
+  const handleProductSubmit = (event) => {
+    event.preventDefault();
+
+    const payload = {
+      ...productForm,
+      nombre: productForm.nombre.trim(),
+      categoria: productForm.categoria,
+      descripcion: productForm.descripcion.trim(),
+      precio: Number(productForm.precio),
+      stock: Number(productForm.stock),
+      img: productForm.img.trim() || 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=400&q=80'
+    };
+
+    if (!payload.nombre || !payload.categoria) {
+      Swal.fire({
+        title: 'Falta información',
+        text: 'Escribe el nombre y elige la categoría antes de guardar.',
+        icon: 'warning',
+        confirmButtonColor: '#E4002B'
+      });
+      return;
+    }
+
+    if (!Number.isFinite(payload.precio) || payload.precio <= 0) {
+      Swal.fire({
+        title: 'Precio inválido',
+        text: 'El precio debe ser un número mayor que cero.',
+        icon: 'warning',
+        confirmButtonColor: '#E4002B'
+      });
+      return;
+    }
+
+    if (!Number.isInteger(payload.stock) || payload.stock < 0) {
+      Swal.fire({
+        title: 'Stock inválido',
+        text: 'El stock debe ser un número entero igual o mayor que cero.',
+        icon: 'warning',
+        confirmButtonColor: '#E4002B'
+      });
+      return;
+    }
+
+    let result;
+    if (editingProductId) {
+      result = updateProduct(editingProductId, payload);
+    } else {
+      result = addProduct(payload);
+    }
+
+    if (result.success) {
+      Swal.fire({
+        title: editingProductId ? 'Producto actualizado' : 'Producto agregado',
+        text: editingProductId ? 'Se guardaron los cambios del producto.' : 'El producto quedó disponible en el inventario.',
+        icon: 'success',
+        confirmButtonColor: '#E4002B'
+      });
+      resetProductForm();
+    } else {
+      Swal.fire({
+        title: 'No se pudo guardar',
+        text: result.message,
+        icon: 'error',
+        confirmButtonColor: '#E4002B'
+      });
+    }
+  };
+
+  const handleEditProduct = (product) => {
+    setEditingProductId(product.id);
+    setProductForm({
+      id: product.id,
+      nombre: product.nombre,
+      categoria: product.categoria,
+      precio: String(product.precio),
+      stock: String(product.stock),
+      descripcion: product.descripcion,
+      img: product.img
+    });
+  };
+
+  const handleDeleteProduct = async (productId) => {
+    const result = await Swal.fire({
+      title: '¿Eliminar producto?',
+      text: 'Esta acción lo quitará del menú e inventario del sistema.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#E4002B'
+    });
+
+    if (!result.isConfirmed) return;
+
+    const response = deleteProduct(productId);
+    if (response.success) {
+      if (editingProductId === productId) resetProductForm();
+      Swal.fire({
+        title: 'Producto eliminado',
+        text: 'Se retiró correctamente del catálogo.',
+        icon: 'success',
+        confirmButtonColor: '#E4002B'
+      });
+    } else {
+      Swal.fire({
+        title: 'No se pudo eliminar',
+        text: response.message,
+        icon: 'error',
+        confirmButtonColor: '#E4002B'
+      });
+    }
+  };
 
   return (
     <div className="kfc-app-container">
@@ -181,7 +312,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Sección de Inventario con Alerta de Stock Crítico */}
+        {/* Sección de Inventario con alerta de stock crítico y administración de productos */}
         {activeTab === 'inventario' && (
           <div className="kfc-content-card d-flex flex-column flex-grow-1">
             <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 pb-2 border-bottom">
@@ -189,7 +320,7 @@ export default function AdminDashboard() {
                 <h2 className="kfc-script-font fs-2 m-0 text-capitalize">
                   Inventario {currentCategory}
                 </h2>
-                <span className="small text-muted">Control de existencias y alertas de reposición</span>
+                <span className="small text-muted">Control de existencias, alertas y edición del catálogo</span>
               </div>
               <button
                 onClick={() => setActiveTab('menu')}
@@ -210,6 +341,100 @@ export default function AdminDashboard() {
               ))}
             </div>
 
+            {/* Administración de productos: alta, edición y eliminación desde el panel del administrador. */}
+            <div className="card border-0 shadow-sm mb-4" style={{ background: '#fff9f6' }}>
+              <div className="card-header bg-white border-0 fw-bold text-danger">
+                {editingProductId ? 'Editar producto del catálogo' : 'Agregar nuevo producto al menú'}
+              </div>
+              <div className="card-body">
+                <form onSubmit={handleProductSubmit}>
+                  <div className="row g-3">
+                    <div className="col-12 col-md-4">
+                      <label className="form-label small fw-bold">Nombre</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={productForm.nombre}
+                        onChange={(e) => setProductForm({ ...productForm, nombre: e.target.value })}
+                        placeholder="Ej. Burger Deluxe"
+                      />
+                    </div>
+
+                    <div className="col-12 col-md-3">
+                      <label className="form-label small fw-bold">Categoría</label>
+                      <select
+                        className="form-select"
+                        value={productForm.categoria}
+                        onChange={(e) => setProductForm({ ...productForm, categoria: e.target.value })}
+                      >
+                        {categories.map(category => (
+                          <option key={category.id} value={category.id}>{category.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="col-12 col-md-2">
+                      <label className="form-label small fw-bold">Precio</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        className="form-control"
+                        value={productForm.precio}
+                        onChange={(e) => setProductForm({ ...productForm, precio: e.target.value })}
+                        placeholder="9.99"
+                      />
+                    </div>
+
+                    <div className="col-12 col-md-2">
+                      <label className="form-label small fw-bold">Stock</label>
+                      <input
+                        type="number"
+                        min="0"
+                        className="form-control"
+                        value={productForm.stock}
+                        onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })}
+                        placeholder="25"
+                      />
+                    </div>
+
+                    <div className="col-12 col-md-12">
+                      <label className="form-label small fw-bold">URL de imagen</label>
+                      <input
+                        type="url"
+                        className="form-control"
+                        value={productForm.img}
+                        onChange={(e) => setProductForm({ ...productForm, img: e.target.value })}
+                        placeholder="https://..."
+                      />
+                    </div>
+
+                    <div className="col-12">
+                      <label className="form-label small fw-bold">Descripción</label>
+                      <textarea
+                        className="form-control"
+                        rows="3"
+                        value={productForm.descripcion}
+                        onChange={(e) => setProductForm({ ...productForm, descripcion: e.target.value })}
+                        placeholder="Descripción del producto, ingredientes o detalle del combo."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="d-flex justify-content-end gap-2 mt-3">
+                    {editingProductId && (
+                      <button type="button" className="btn btn-outline-secondary" onClick={resetProductForm}>
+                        Cancelar
+                      </button>
+                    )}
+                    <button type="submit" className="btn btn-danger">
+                      {editingProductId ? 'Guardar cambios' : 'Agregar producto'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
             <div className="table-responsive">
               <table className="table table-hover align-middle">
                 <thead className="table-light">
@@ -220,6 +445,7 @@ export default function AdminDashboard() {
                     <th>Precio</th>
                     <th>Stock Actual</th>
                     <th>Condición</th>
+                    <th className="text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -232,7 +458,12 @@ export default function AdminDashboard() {
                         <td><code>{prod.id}</code></td>
                         <td>
                           <div className="d-flex align-items-center gap-2">
-                            <img src={prod.img} alt={prod.nombre} style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 6 }} onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = placeholderImg; }} />
+                            <img
+                              src={prod.img}
+                              alt={prod.nombre}
+                              style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 6 }}
+                              onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = placeholderImg; }}
+                            />
                             <div>
                               <div className="fw-semibold">{prod.nombre}</div>
                               <small className="text-muted">{prod.descripcion}</small>
@@ -252,6 +483,24 @@ export default function AdminDashboard() {
                           ) : (
                             <span className="badge bg-success">Óptimo</span>
                           )}
+                        </td>
+                        <td className="text-center">
+                          <div className="btn-group btn-group-sm">
+                            <button
+                              type="button"
+                              className="btn btn-outline-primary"
+                              onClick={() => handleEditProduct(prod)}
+                            >
+                              <i className="bi bi-pencil-square"></i>
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-outline-danger"
+                              onClick={() => handleDeleteProduct(prod.id)}
+                            >
+                              <i className="bi bi-trash"></i>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -430,3 +679,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+

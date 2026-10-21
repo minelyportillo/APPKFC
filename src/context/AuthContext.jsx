@@ -148,6 +148,110 @@ export function AuthProvider({ children }) {
   };
 
   /**
+   * Genera un ID único para nuevos productos.
+   */
+  const generateProductId = (nextProducts = products) => {
+    const numbers = nextProducts
+      .map(product => Number(String(product?.id || '').replace(/\D/g, '')))
+      .filter(value => Number.isInteger(value) && value > 0);
+
+    const maxValue = numbers.length ? Math.max(...numbers) : 0;
+    return `PRD-${String(maxValue + 1).padStart(2, '0')}`;
+  };
+
+  /**
+   * Persistencia centralizada del catálogo y la administración del inventario.
+   */
+  const saveProducts = (nextProducts) => {
+    setProducts(nextProducts);
+    localStorage.setItem(STORAGE_KEYS.MENU, JSON.stringify(nextProducts));
+  };
+
+  /**
+   * Agrega un producto nuevo al menú y al inventario del sistema.
+   */
+  const addProduct = (productData) => {
+    const trimmedName = String(productData?.nombre || '').trim();
+    const trimmedDescription = String(productData?.descripcion || '').trim();
+    const category = String(productData?.categoria || '').trim();
+    const img = String(productData?.img || '').trim();
+    const price = Number(productData?.precio);
+    const stock = Number(productData?.stock);
+
+    if (!trimmedName || !category) {
+      return { success: false, message: 'El nombre y la categoría del producto son obligatorios.' };
+    }
+    if (!Number.isFinite(price) || price <= 0) {
+      return { success: false, message: 'El precio debe ser mayor que cero.' };
+    }
+    if (!Number.isInteger(stock) || stock < 0) {
+      return { success: false, message: 'El stock debe ser un número entero mayor o igual a cero.' };
+    }
+
+    const nextProduct = {
+      id: productData?.id || generateProductId(),
+      categoria: category,
+      nombre: trimmedName,
+      precio: Number(price.toFixed(2)),
+      stock: Number(stock),
+      img: img || 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=400&q=80',
+      descripcion: trimmedDescription || 'Producto disponible en el menú.'
+    };
+
+    const nextProducts = [...products, nextProduct];
+    saveProducts(nextProducts);
+    return { success: true, product: nextProduct };
+  };
+
+  /**
+   * Actualiza la información de un producto existente y vuelve a persistir el inventario.
+   */
+  const updateProduct = (productId, productData) => {
+    const productIndex = products.findIndex(product => product.id === productId);
+    if (productIndex === -1) {
+      return { success: false, message: 'No se encontró el producto a editar.' };
+    }
+
+    const nextProduct = {
+      ...products[productIndex],
+      categoria: String(productData?.categoria || products[productIndex].categoria).trim(),
+      nombre: String(productData?.nombre || '').trim() || products[productIndex].nombre,
+      precio: Number(productData?.precio ?? products[productIndex].precio),
+      stock: Number(productData?.stock ?? products[productIndex].stock),
+      descripcion: String(productData?.descripcion || '').trim() || products[productIndex].descripcion,
+      img: String(productData?.img || products[productIndex].img).trim() || products[productIndex].img
+    };
+
+    if (!nextProduct.nombre || !nextProduct.categoria) {
+      return { success: false, message: 'El nombre y la categoría del producto son obligatorios.' };
+    }
+    if (!Number.isFinite(nextProduct.precio) || nextProduct.precio <= 0) {
+      return { success: false, message: 'El precio debe ser mayor que cero.' };
+    }
+    if (!Number.isInteger(nextProduct.stock) || nextProduct.stock < 0) {
+      return { success: false, message: 'El stock debe ser un número entero mayor o igual a cero.' };
+    }
+
+    const nextProducts = products.map(product => product.id === productId ? nextProduct : product);
+    saveProducts(nextProducts);
+    return { success: true, product: nextProduct };
+  };
+
+  /**
+   * Elimina un producto del menú y del inventario del sistema.
+   */
+  const deleteProduct = (productId) => {
+    const productToDelete = products.find(product => product.id === productId);
+    if (!productToDelete) {
+      return { success: false, message: 'No se encontró el producto.' };
+    }
+
+    const nextProducts = products.filter(product => product.id !== productId);
+    saveProducts(nextProducts);
+    return { success: true, product: productToDelete };
+  };
+
+  /**
    * Inicia sesión validando credenciales y guardando timestamp
    */
   const login = (email, password) => {
@@ -467,7 +571,10 @@ export function AuthProvider({ children }) {
       cancelOrder,
       orders,
       calculateMetrics,
-      ESTADOS_PEDIDO
+      ESTADOS_PEDIDO,
+      addProduct,
+      updateProduct,
+      deleteProduct
     }}>
       {children}
     </AuthContext.Provider>
@@ -477,3 +584,4 @@ export function AuthProvider({ children }) {
 export function useAuth() {
   return useContext(AuthContext);
 }
+
