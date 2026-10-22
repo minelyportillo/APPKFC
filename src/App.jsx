@@ -32,7 +32,7 @@ export default function App() {
           <Route
             path="/cajero"
             element={
-              <ProtectedRoute allowedRoles={['cajero', 'admin']}>
+              <ProtectedRoute allowedRoles={['cajero']}>
                 <CajeroDashboard />
               </ProtectedRoute>
             }
@@ -41,7 +41,7 @@ export default function App() {
           <Route
             path="/orden"
             element={
-              <ProtectedRoute allowedRoles={['cajero', 'admin']}>
+              <ProtectedRoute allowedRoles={['cajero']}>
                 <OrderView />
               </ProtectedRoute>
             }

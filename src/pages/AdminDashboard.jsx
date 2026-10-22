@@ -1,11 +1,12 @@
 import { useState } from 'react';
+import Swal from 'sweetalert2';
 import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency, formatDate } from '../services/storageService';
 import MonthlySalesChart from '../components/MonthlySalesChart';
 
 export default function AdminDashboard() {
-  const { user, products, orders, getUsers, calculateMetrics } = useAuth();
+  const { user, products, orders, getUsers, calculateMetrics, updateProductStock } = useAuth();
 
   const [activeTab, setActiveTab] = useState('menu');
   const [currentCategory, setCurrentCategory] = useState('Combos');
@@ -24,6 +25,19 @@ export default function AdminDashboard() {
   const filteredProducts = products.filter(
     p => p.categoria.toLowerCase() === currentCategory.toLowerCase()
   );
+
+  const handleStockUpdate = (event, productId) => {
+    event.preventDefault();
+    const stock = Number(new FormData(event.currentTarget).get('stock'));
+    const result = updateProductStock(productId, stock);
+
+    Swal.fire({
+      title: result.success ? 'Inventario actualizado' : 'No se pudo actualizar',
+      text: result.message,
+      icon: result.success ? 'success' : 'error',
+      confirmButtonColor: '#E4002B'
+    });
+  };
 
   // small SVG placeholder (data URL) used when product images fail to load
   const placeholderImg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="40"><rect width="100%" height="100%" fill="%23f3f3f3"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="10" fill="%23888">no image</text></svg>';
@@ -219,6 +233,7 @@ export default function AdminDashboard() {
                     <th>Categoría</th>
                     <th>Precio</th>
                     <th>Stock Actual</th>
+                    <th>Modificar Stock</th>
                     <th>Condición</th>
                   </tr>
                 </thead>
@@ -242,6 +257,27 @@ export default function AdminDashboard() {
                         <td><span className="badge bg-light text-dark border">{prod.categoria}</span></td>
                         <td className="fw-bold">{formatCurrency(prod.precio)}</td>
                         <td className="fw-bold">{prod.stock} u.</td>
+                        <td>
+                          <form
+                            className="d-flex align-items-center gap-2"
+                            onSubmit={(event) => handleStockUpdate(event, prod.id)}
+                          >
+                            <input
+                              aria-label={`Nueva cantidad de ${prod.nombre}`}
+                              className="form-control form-control-sm"
+                              name="stock"
+                              type="number"
+                              min="0"
+                              step="1"
+                              defaultValue={prod.stock}
+                              required
+                              style={{ width: '90px' }}
+                            />
+                            <button className="btn btn-danger btn-sm text-nowrap" type="submit">
+                              Guardar
+                            </button>
+                          </form>
+                        </td>
                         <td>
                           {agotado ? (
                             <span className="badge bg-danger">Agotado</span>

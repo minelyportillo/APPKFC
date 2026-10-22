@@ -26,7 +26,7 @@ export default function Header({ title = null, showCart = true, backToMenu = fal
               <i className="bi bi-arrow-left me-1"></i> Volver al menú
             </button>
           ) : (
-            <Link to="/cajero" className="kfc-header-link">
+            <Link to={user?.rol === ROLES.ADMIN ? '/admin' : '/cajero'} className="kfc-header-link">
               <i className="bi bi-grid me-1 d-none d-sm-inline"></i> Menú
             </Link>
           )}

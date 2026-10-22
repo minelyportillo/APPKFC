@@ -259,6 +259,26 @@ export function AuthProvider({ children }) {
 
   const clearCart = () => setCart({});
 
+  const updateProductStock = (productId, stock) => {
+    if (!Number.isInteger(stock) || stock < 0) {
+      return { success: false, message: 'La cantidad debe ser un número entero igual o mayor que cero.' };
+    }
+
+    const productExists = products.some(product => product.id === productId);
+    if (!productExists) {
+      return { success: false, message: 'Producto no encontrado.' };
+    }
+
+    const updatedProducts = products.map(product => (
+      product.id === productId ? { ...product, stock } : product
+    ));
+
+    setProducts(updatedProducts);
+    localStorage.setItem(STORAGE_KEYS.MENU, JSON.stringify(updatedProducts));
+
+    return { success: true, message: 'Inventario actualizado correctamente.' };
+  };
+
   /**
    * CREATE: Crea un nuevo pedido, descuenta stock del menú y persiste en 'kfc_orders'
    */
@@ -462,6 +482,7 @@ export function AuthProvider({ children }) {
       cart,
       updateQuantity,
       clearCart,
+      updateProductStock,
       createOrder,
       updateOrderStatus,
       cancelOrder,
