@@ -79,6 +79,9 @@ Las credenciales son públicas, de demostración y se almacenan en el navegador.
 
 [https://appkfc.vercel.app/login]
 
+## Enlace de video 
+[https://1drv.ms/v/c/f279e39f203ef0af/IQCELoxRUfVTQrZuc9vRX_0iAX4JWANALjeQQy5m2AtkWGs?e=7ijgUH ]
+
 ## Estructura principal
 
 ```text
