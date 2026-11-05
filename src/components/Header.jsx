@@ -31,6 +31,10 @@ export default function Header({ title = null, showCart = true, backToMenu = fal
             </Link>
           )}
 
+          <Link to="/clima" className="kfc-header-link" aria-label="Consultar el clima">
+            <i className="bi bi-cloud-sun me-1"></i> Clima
+          </Link>
+
           {showCart && (
             <Link to="/orden" className="kfc-header-link position-relative">
               <i className="bi bi-bag-check me-1 d-none d-sm-inline"></i> Ver Orden

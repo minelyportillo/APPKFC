@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
 import CajeroDashboard from './pages/CajeroDashboard';
 import OrderView from './pages/OrderView';
+import WeatherPage from './pages/WeatherPage';
 
 function RootRedirect() {
   const { user, ROLES } = useAuth();
@@ -43,6 +44,15 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={['cajero']}>
                 <OrderView />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/clima"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'cajero']}>
+                <WeatherPage />
               </ProtectedRoute>
             }
           />
