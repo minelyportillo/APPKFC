@@ -31,6 +31,7 @@ export const INITIAL_MENU = [
     precio: 24.99,
     stock: 35,
     img: 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=400&q=80',
+    imgFallback: '/img/productos/prd-01.svg',
     descripcion: '8 piezas de pollo crujiente, 4 biscuits y 2 complementos familiares'
   },
   {
@@ -39,8 +40,8 @@ export const INITIAL_MENU = [
     nombre: 'Wow Pack 4 Piezas',
     precio: 13.99,
     stock: 40,
-    img: 'https://images.unsplash.com/photo-1513639776629-7b61b0ac49cb?w=400&q=80',
-    descripcion: '4 piezas de pollo tradicional, 2 papas medianas y 2 gaseosas'
+    img: '/img/productos/wow-pack.png',
+    descripcion: '4 piezas de pollo originales, 3 puré con gravy pequeños, 2 hamburguesas Jr. Coronel y 3 biscuits'
   },
   {
     id: 'PRD-03',
@@ -49,6 +50,7 @@ export const INITIAL_MENU = [
     precio: 8.50,
     stock: 50,
     img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&q=80',
+    imgFallback: '/img/productos/prd-03.svg',
     descripcion: 'Hamburguesa Kruncher, 1 pieza de pollo, papas y bebida'
   },
   {
@@ -58,6 +60,7 @@ export const INITIAL_MENU = [
     precio: 4.75,
     stock: 65,
     img: 'https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=400&q=80',
+    imgFallback: '/img/productos/prd-04.svg',
     descripcion: '2 jugosas piezas con la receta secreta original del Coronel'
   },
   {
@@ -67,6 +70,7 @@ export const INITIAL_MENU = [
     precio: 6.50,
     stock: 4, // Stock crítico (< 5) para pruebas de alerta visual
     img: 'https://images.unsplash.com/photo-1562967914-608f82629710?w=400&q=80',
+    imgFallback: '/img/productos/prd-05.svg',
     descripcion: 'Trocitos de pechuga empanizados con salsa BBQ'
   },
   {
@@ -75,7 +79,7 @@ export const INITIAL_MENU = [
     nombre: 'Papas Fritas Medianas',
     precio: 2.25,
     stock: 80,
-    img: 'https://images.unsplash.com/photo-1576107232684-1279f3908594?w=400&q=80',
+    img: '/img/productos/papas-fritas-medianas.png',
     descripcion: 'Papas doradas al estilo crujiente y sazonadas'
   },
   {
@@ -84,7 +88,7 @@ export const INITIAL_MENU = [
     nombre: 'Puré de Papa con Gravy',
     precio: 1.50,
     stock: 3, // Stock crítico (< 5)
-    img: 'https://images.unsplash.com/photo-1519915028121-7d346b7240c2?w=400&q=80',
+    img: '/img/productos/pure-gravy.png',
     descripcion: 'Clásico puré suave bañado con salsa gravy tradicional'
   },
   {
@@ -94,9 +98,106 @@ export const INITIAL_MENU = [
     precio: 1.25,
     stock: 120,
     img: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400&q=80',
+    imgFallback: '/img/productos/prd-08.svg',
     descripcion: 'Pepsi, Pepsi Black, 7Up o Mirinda bien fría'
+  },
+  {
+    id: 'PRD-21',
+    categoria: 'Boxes',
+    nombre: 'Big Kruncher',
+    precio: 9.00,
+    stock: 40,
+    img: '/img/productos/big-kruncher.png',
+    descripcion: 'Hamburguesa Big Kruncher BBQ, 1 pieza de pollo original, 1 papa mediana, 1 ensalada y 1 soda de lata Pepsi'
+  },
+  {
+    id: 'PRD-22',
+    categoria: 'Boxes',
+    nombre: 'Big Box XL',
+    precio: 9.99,
+    stock: 40,
+    img: '/img/productos/big-box-xl.png',
+    descripcion: 'Big Kruncher XL Buffalo, 1 pieza de pollo original, 1 papa mediana, 1 ensalada y 1 soda de lata Pepsi'
+  },
+  {
+    id: 'PRD-23',
+    categoria: 'Pollo',
+    nombre: 'Trío Coronel',
+    precio: 8.20,
+    stock: 40,
+    img: '/img/productos/trio-coronel.png',
+    descripcion: '3 piezas de pollo originales, 1 puré con gravy pequeño, 1 biscuit y 1 soda de lata Pepsi'
+  },
+  {
+    id: 'PRD-24',
+    categoria: 'Pollo',
+    nombre: 'Trío Full',
+    precio: 8.95,
+    stock: 40,
+    img: '/img/productos/trio-full.png',
+    descripcion: '3 piezas de pollo originales, 1 puré con gravy pequeño, 1 biscuit, 1 papa mediana y 1 soda de lata Pepsi'
+  },
+  {
+    id: 'PRD-25',
+    categoria: 'Combos',
+    nombre: 'Wow Bucket',
+    precio: 9.80,
+    stock: 40,
+    img: '/img/productos/wow-bucket.png',
+    descripcion: '6 piezas de pollo originales, 3 puré con gravy pequeños y 1 Pepsi de 1.5 Lts'
+  },
+  {
+    id: 'PRD-26',
+    categoria: 'Bebidas',
+    nombre: 'Soda 1.5 Lts',
+    precio: 2.50,
+    stock: 40,
+    img: '/img/productos/soda-1-5l.png',
+    descripcion: 'Soda Pepsi de 1.5 litros, ideal para compartir'
+  },
+  {
+    id: 'PRD-27',
+    categoria: 'Complementos',
+    nombre: 'Pie Queso Berry',
+    precio: 1.50,
+    stock: 40,
+    img: '/img/productos/pie-queso-berry.png',
+    descripcion: 'Pie crujiente relleno de queso y berry'
+  },
+  {
+    id: 'PRD-28',
+    categoria: 'Bebidas',
+    nombre: 'Botella con Agua',
+    precio: 1.20,
+    stock: 40,
+    img: '/img/productos/botella-agua.png',
+    descripcion: 'Botella de agua para acompañar tu pedido'
   }
 ];
+
+// Platos que se quitaron del catálogo: se eliminan de los menús ya guardados en el navegador
+const RETIRED_PRODUCT_IDS = new Set([
+  'PRD-09', 'PRD-10', 'PRD-11', 'PRD-12', 'PRD-13',
+  'PRD-14', 'PRD-15', 'PRD-16', 'PRD-17', 'PRD-18'
+]);
+
+/**
+ * Sincroniza el menú guardado en localStorage con el catálogo actual (INITIAL_MENU):
+ * - agrega los platillos nuevos que aún no existen,
+ * - actualiza imagen, nombre, descripción, precio y categoría de los existentes,
+ * - conserva el stock que ya tenía cada producto.
+ */
+export function mergeMenu(storedMenu) {
+  const stored = Array.isArray(storedMenu) ? storedMenu : [];
+  const storedById = new Map(stored.map(p => [p.id, p]));
+  const merged = INITIAL_MENU.map(seed => {
+    const previous = storedById.get(seed.id);
+    return previous ? { ...seed, stock: Number.isInteger(previous.stock) ? previous.stock : seed.stock } : seed;
+  });
+  const seedIds = new Set(INITIAL_MENU.map(p => p.id));
+  const extras = stored.filter(p => p && !seedIds.has(p.id) && !RETIRED_PRODUCT_IDS.has(p.id));
+  return [...merged, ...extras];
+}
 
 export const INITIAL_ORDERS = () => {
   const hoy = new Date();
@@ -263,4 +364,34 @@ export function isValidCardExpiry(monthValue, yearValue) {
   const now = new Date();
   return year > now.getFullYear()
     || (year === now.getFullYear() && month >= now.getMonth() + 1);
+}
+
+/**
+ * Convierte un monto a centavos enteros para evitar errores de decimales
+ * (por ejemplo 0.1 + 0.2). Todos los cálculos de dinero se hacen en centavos.
+ */
+export function toCents(amount) {
+  return Math.round((parseFloat(amount) || 0) * 100);
+}
+
+/**
+ * Cambio a devolver = monto recibido - total (en dólares, 2 decimales).
+ */
+export function calculateChange(received, total) {
+  return (toCents(received) - toCents(total)) / 100;
+}
+
+/**
+ * Valida el monto recibido en efectivo: número positivo de hasta 2 decimales,
+ * máximo 999,999.99 y que alcance a cubrir el total del pedido.
+ */
+export function isValidCashAmount(value, total) {
+  const text = typeof value === 'string' ? value.trim() : String(value ?? '');
+  if (!/^\d{1,6}(\.\d{1,2})?$/.test(text)) return false;
+  const cents = toCents(text);
+  return cents > 0 && cents >= toCents(total);
+}
+
+export function isValidCardCvv(value) {
+  return /^\d{3,4}$/.test(typeof value === 'string' ? value : '');
 }

@@ -5,9 +5,13 @@ import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 import {
   formatCurrency,
+  calculateChange,
+  isValidCardCvv,
   isValidCardExpiry,
   isValidCardNumber,
-  isValidPersonName
+  isValidCashAmount,
+  isValidPersonName,
+  toCents
 } from '../services/storageService';
 
 export default function OrderView() {
@@ -17,6 +21,7 @@ export default function OrderView() {
   const [step, setStep] = useState('summary');
   const [clienteNombre, setClienteNombre] = useState('');
   const [orderCreada, setOrderCreada] = useState(null);
+  const [cashReceived, setCashReceived] = useState('');
 
   const [cardForm, setCardForm] = useState({
     name: '',
@@ -33,7 +38,12 @@ export default function OrderView() {
 
   const total = cartItems.reduce((sum, item) => sum + item.subtotal, 0);
 
-  const handleFinishCash = () => {
+  const cashHasValue = cashReceived.trim() !== '';
+  const cashIsEnough = cashHasValue && isValidCashAmount(cashReceived, total);
+  const changeAmount = cashHasValue ? calculateChange(cashReceived, total) : 0;
+
+  const handleFinishCash = (e) => {
+    e.preventDefault();
     const normalizedName = clienteNombre.trim();
     if (normalizedName && !isValidPersonName(normalizedName)) {
       Swal.fire({
@@ -44,9 +54,19 @@ export default function OrderView() {
       });
       return;
     }
+    if (!isValidCashAmount(cashReceived, total)) {
+      Swal.fire({
+        title: 'Revisa el efectivo',
+        text: `Ingresa el monto recibido (máximo 2 decimales). Debe ser igual o mayor a ${formatCurrency(total)}.`,
+        icon: 'warning',
+        confirmButtonColor: '#E4002B'
+      });
+      return;
+    }
 
-    const res = createOrder('Efectivo', normalizedName || 'Cliente Mostrador');
+    const res = createOrder('Efectivo', normalizedName || 'Cliente Mostrador', { montoRecibido: cashReceived.trim() });
     if (res.success) {
+      setCashReceived('');
       setOrderCreada(res.pedido);
       setStep('success');
     } else {
@@ -91,7 +111,7 @@ export default function OrderView() {
       });
       return;
     }
-    if (!/^\d{3,4}$/.test(cardForm.cvv)) {
+    if (!isValidCardCvv(cardForm.cvv)) {
       Swal.fire({
         title: 'Revisa el código de prueba',
         text: 'El código debe tener 3 o 4 dígitos. No ingreses datos reales.',
@@ -158,7 +178,7 @@ export default function OrderView() {
                       <div key={item.id} className="card mb-2 p-2 border shadow-sm rounded-3">
                         <div className="d-flex align-items-center justify-content-between">
                           <div className="d-flex align-items-center gap-3">
-                            <img src={item.img} alt={item.nombre} style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 8 }} />
+                            <img src={item.img} alt={item.nombre} style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 8 }} onError={(e) => { e.currentTarget.onerror = null; if (item.imgFallback) e.currentTarget.src = item.imgFallback; }} />
                             <div>
                               <div className="fw-bold text-truncate" style={{ maxWidth: '180px' }}>{item.nombre}</div>
                               <div className="text-danger fw-bold">{formatCurrency(item.precio)} c/u</div>
@@ -212,7 +232,7 @@ export default function OrderView() {
                       <div className="d-flex gap-2">
                         <button
                           type="button"
-                          onClick={handleFinishCash}
+                          onClick={() => setStep('cash')}
                           className="btn-kfc-red flex-grow-1"
                         >
                           <i className="bi bi-cash me-1"></i> Efectivo
@@ -230,6 +250,78 @@ export default function OrderView() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {step === 'cash' && (
+          <div className="kfc-content-card w-100" style={{ maxWidth: '520px' }}>
+            <h2 className="kfc-script-font fs-1 text-center mb-3">Pago en efectivo</h2>
+
+            <div className="p-3 bg-light rounded-3 border d-flex justify-content-between align-items-center mb-3">
+              <span className="fw-bold">Total a cobrar:</span>
+              <span className="text-danger fw-bold fs-3">{formatCurrency(total)}</span>
+            </div>
+
+            <form onSubmit={handleFinishCash}>
+              <label className="form-label small fw-bold mb-1" htmlFor="orden-efectivo">Monto recibido del cliente (USD)</label>
+              <div className="input-group mb-2">
+                <span className="input-group-text">$</span>
+                <input
+                  id="orden-efectivo"
+                  type="number"
+                  className={`form-control ${cashHasValue && !cashIsEnough ? 'is-invalid' : ''}`}
+                  placeholder="0.00"
+                  inputMode="decimal"
+                  min="0.01"
+                  max="999999.99"
+                  step="0.01"
+                  value={cashReceived}
+                  onChange={(e) => setCashReceived(e.target.value)}
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div className="d-flex flex-wrap gap-2 mb-3">
+                <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setCashReceived((toCents(total) / 100).toFixed(2))}>
+                  Exacto
+                </button>
+                {[5, 10, 20, 50].map(bill => (
+                  <button key={bill} type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setCashReceived(String(bill))}>
+                    ${bill}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mb-4" style={{ minHeight: '1.5rem' }}>
+                {!cashHasValue && <span className="small text-muted">Escribe con cuánto paga el cliente para calcular el cambio.</span>}
+                {cashHasValue && cashIsEnough && (
+                  <span className={`fw-bold ${changeAmount > 0 ? 'text-success' : 'text-secondary'}`} role="status">
+                    {changeAmount > 0 ? `Cambio a devolver: ${formatCurrency(changeAmount)}` : 'Pago exacto: no hay cambio que devolver.'}
+                  </span>
+                )}
+                {cashHasValue && !cashIsEnough && (
+                  <span className="fw-bold text-danger" role="alert">
+                    {toCents(cashReceived) > 0 && toCents(cashReceived) < toCents(total)
+                      ? `Falta ${formatCurrency((toCents(total) - toCents(cashReceived)) / 100)} para cubrir el total.`
+                      : 'Ingresa un monto válido (máximo 2 decimales).'}
+                  </span>
+                )}
+              </div>
+
+              <div className="d-flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setCashReceived(''); setStep('summary'); }}
+                  className="btn btn-outline-secondary flex-grow-1"
+                >
+                  Regresar
+                </button>
+                <button type="submit" className="btn-kfc-dark flex-grow-1">
+                  Confirmar cobro
+                </button>
+              </div>
+            </form>
           </div>
         )}
 
@@ -381,6 +473,18 @@ export default function OrderView() {
                 <span className="text-muted">Monto Pagado:</span>
                 <strong className="text-danger">{formatCurrency(orderCreada?.total)}</strong>
               </div>
+              {orderCreada?.montoRecibido != null && (
+                <>
+                  <div className="d-flex justify-content-between mb-1">
+                    <span className="text-muted">Efectivo recibido:</span>
+                    <strong>{formatCurrency(orderCreada.montoRecibido)}</strong>
+                  </div>
+                  <div className="d-flex justify-content-between mb-1">
+                    <span className="text-muted">Cambio devuelto:</span>
+                    <strong className="text-success">{formatCurrency(orderCreada.cambio)}</strong>
+                  </div>
+                </>
+              )}
             </div>
 
             <p className="text-muted mb-4 small">El inventario fue descontado automáticamente y el ticket fue enviado a la cocina.</p>

@@ -2,7 +2,19 @@ import { useState } from 'react';
 import Swal from 'sweetalert2';
 import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
-import { formatCurrency, formatDate, isValidPersonName } from '../services/storageService';
+import {
+  formatCurrency,
+  formatDate,
+  isValidPersonName,
+  isValidCardNumber,
+  isValidCardExpiry,
+  isValidCardCvv,
+  isValidCashAmount,
+  calculateChange,
+  toCents
+} from '../services/storageService';
+
+const EMPTY_CARD_FORM = { name: '', number: '', month: '', year: '', cvv: '' };
 
 const placeholderImg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="240"><rect width="100%" height="100%" fill="%23f3f3f3"/><text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="20" fill="%23a1a1aa">KFC</text></svg>';
 
@@ -25,18 +37,25 @@ export default function CajeroDashboard() {
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [clienteNombre, setClienteNombre] = useState('');
   const [metodoPago, setMetodoPago] = useState('Efectivo');
+  const [pickerCategory, setPickerCategory] = useState('Combos');
+  const [cashReceived, setCashReceived] = useState('');
+  const [cardForm, setCardForm] = useState(EMPTY_CARD_FORM);
+  const [procesando, setProcesando] = useState(false);
 
   const categories = [
-    { id: 'Combos', name: 'Combos', img: 'https://images.unsplash.com/photo-1513639776629-7b61b0ac49cb?w=400&q=80' },
-    { id: 'Boxes', name: 'Boxes', img: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=400&q=80' },
-    { id: 'Pollo', name: 'Pollo', img: 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=400&q=80' },
-    { id: 'Complementos', name: 'Complementos', img: 'https://images.unsplash.com/photo-1576107232684-1279f3908594?w=400&q=80' },
-    { id: 'Bebidas', name: 'Bebidas', img: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400&q=80' }
+    { id: 'Combos', name: 'Combos', img: 'https://images.unsplash.com/photo-1513639776629-7b61b0ac49cb?w=400&q=80', imgFallback: '/img/categorias/combos.svg' },
+    { id: 'Boxes', name: 'Boxes', img: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=400&q=80', imgFallback: '/img/categorias/boxes.svg' },
+    { id: 'Pollo', name: 'Pollo', img: 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=400&q=80', imgFallback: '/img/categorias/pollo.svg' },
+    { id: 'Complementos', name: 'Complementos', img: 'https://images.unsplash.com/photo-1576107232684-1279f3908594?w=400&q=80', imgFallback: '/img/categorias/complementos.svg' },
+    { id: 'Bebidas', name: 'Bebidas', img: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400&q=80', imgFallback: '/img/categorias/bebidas.svg' }
   ];
 
   const categoryProducts = selectedCategory
     ? products.filter(p => p.categoria.toLowerCase() === selectedCategory.toLowerCase())
     : [];
+
+  const pickerProducts = products.filter(p => p.categoria.toLowerCase() === pickerCategory.toLowerCase());
+  const totalItems = Object.values(cart).reduce((a, b) => a + b, 0);
 
   const metrics = calculateMetrics();
 
@@ -55,36 +74,99 @@ export default function CajeroDashboard() {
     return sum + (prod ? prod.precio * qty : 0);
   }, 0);
 
-  const handleCrearPedidoRapido = (e) => {
+  const resetPaymentForm = () => {
+    setCashReceived('');
+    setCardForm(EMPTY_CARD_FORM);
+  };
+
+  const closeOrderModal = () => {
+    if (procesando) return;
+    setShowOrderModal(false);
+    resetPaymentForm();
+  };
+
+  const cartTotalCents = toCents(cartTotal);
+  const receivedCents = toCents(cashReceived);
+  const cashHasValue = cashReceived.trim() !== '';
+  const cashIsEnough = cashHasValue && isValidCashAmount(cashReceived, cartTotal);
+  const changeAmount = cashHasValue ? calculateChange(cashReceived, cartTotal) : 0;
+
+  const warn = (title, text) => Swal.fire({ title, text, icon: 'warning', confirmButtonColor: '#E4002B' });
+
+  const handleCrearPedidoRapido = async (e) => {
     e.preventDefault();
+    if (procesando) return;
+
     const normalizedName = clienteNombre.trim();
     if (!isValidPersonName(normalizedName)) {
-      Swal.fire({
-        title: 'Revisa el nombre',
-        text: 'Ingresa un nombre válido de 2 a 60 caracteres.',
-        icon: 'warning',
-        confirmButtonColor: '#E4002B'
-      });
+      warn('Revisa el nombre', 'Ingresa un nombre válido de 2 a 60 caracteres.');
       return;
     }
     if (Object.keys(cart).length === 0) {
-      Swal.fire({
-        title: 'Pedido vacío',
-        text: 'Agrega al menos un producto antes de confirmar el pedido.',
-        icon: 'warning',
-        confirmButtonColor: '#E4002B'
-      });
+      warn('Pedido vacío', 'Agrega al menos un producto antes de confirmar el pedido.');
       return;
     }
 
-    const res = createOrder(metodoPago, normalizedName);
+    let paymentDetails = null;
+
+    if (metodoPago === 'Efectivo') {
+      if (!isValidCashAmount(cashReceived, cartTotal)) {
+        warn('Revisa el efectivo', `Ingresa el monto recibido (máximo 2 decimales). Debe ser igual o mayor a ${formatCurrency(cartTotal)}.`);
+        return;
+      }
+      paymentDetails = { montoRecibido: cashReceived.trim() };
+    } else {
+      const cardholderName = cardForm.name.trim();
+      const cardNumber = cardForm.number.replace(/\D/g, '');
+      if (!isValidPersonName(cardholderName)) {
+        warn('Revisa el nombre de la tarjeta', 'Ingresa un nombre válido de 2 a 60 caracteres.');
+        return;
+      }
+      if (!isValidCardNumber(cardNumber)) {
+        warn('Número de prueba no válido', 'Ingresa un número de prueba válido. No uses una tarjeta real.');
+        return;
+      }
+      if (!isValidCardExpiry(cardForm.month, cardForm.year)) {
+        warn('Revisa el vencimiento', 'El mes y año deben ser válidos y no estar vencidos.');
+        return;
+      }
+      if (!isValidCardCvv(cardForm.cvv)) {
+        warn('Revisa el código de seguridad', 'El código debe tener 3 o 4 dígitos. No ingreses datos reales.');
+        return;
+      }
+
+      // Simulación del cobro: no se contacta ningún banco ni se guardan los datos.
+      setProcesando(true);
+      Swal.fire({
+        title: 'Procesando pago…',
+        text: 'Simulación de cobro con tarjeta',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => Swal.showLoading()
+      });
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      setCardForm(EMPTY_CARD_FORM);
+    }
+
+    const res = createOrder(metodoPago, normalizedName, paymentDetails);
+    setProcesando(false);
+
     if (res.success) {
       setShowOrderModal(false);
       setClienteNombre('');
       setSelectedCategory(null);
+      resetPaymentForm();
+
+      const detalle = metodoPago === 'Efectivo'
+        ? (res.pedido.cambio > 0
+          ? `Recibido: ${formatCurrency(res.pedido.montoRecibido)}. Cambio a devolver: ${formatCurrency(res.pedido.cambio)}.`
+          : 'Pago exacto, no hay cambio que devolver.')
+        : `Pago aprobado (simulación) por ${formatCurrency(res.pedido.total)}.`;
+
       Swal.fire({
         title: 'Pedido registrado',
-        text: `El pedido ${res.pedido.id} se creó correctamente.`,
+        text: `El pedido ${res.pedido.id} se creó correctamente. ${detalle}`,
         icon: 'success',
         confirmButtonColor: '#E4002B'
       });
@@ -253,7 +335,7 @@ export default function CajeroDashboard() {
                         src={cat.img}
                         alt={cat.name}
                         className="kfc-category-img"
-                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = placeholderImg; }}
+                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = cat.imgFallback || placeholderImg; }}
                       />
                     </div>
                   </div>
@@ -287,7 +369,7 @@ export default function CajeroDashboard() {
                             src={prod.img}
                             alt={prod.nombre}
                             className="kfc-product-img"
-                            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = placeholderImg; }}
+                            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = prod.imgFallback || placeholderImg; }}
                           />
                           <div className="fw-bold small text-truncate" title={prod.nombre}>{prod.nombre}</div>
                           <div className="d-flex justify-content-between align-items-center my-1">
@@ -337,6 +419,7 @@ export default function CajeroDashboard() {
               <small className="text-muted">Control de preparación, entrega y cancelaciones</small>
             </div>
 
+            <div className="overflow-auto" style={{ maxWidth: '100%' }}>
             <div className="btn-group" role="group">
               <button
                 type="button"
@@ -373,6 +456,7 @@ export default function CajeroDashboard() {
               >
                 Cancelados
               </button>
+            </div>
             </div>
           </div>
 
@@ -486,98 +570,311 @@ export default function CajeroDashboard() {
           </div>
         </div>
 
-        {/* Modal de Pedido Rápido */}
+        {/* Modal de Pedido Rápido: selección de productos, cobro en efectivo o tarjeta */}
         {showOrderModal && (
-          <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
-            <div className="modal-dialog modal-lg modal-dialog-centered">
+          <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.6)', overflowY: 'auto' }}>
+            <div className="modal-dialog modal-xl modal-dialog-centered">
               <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '16px', overflow: 'hidden' }}>
                 <div className="modal-header bg-danger text-white">
                   <h5 className="modal-title fw-bold">
                     <i className="bi bi-cart-plus me-2"></i>Registrar Pedido de Cliente
                   </h5>
-                  <button type="button" className="btn-close btn-close-white" onClick={() => setShowOrderModal(false)}></button>
+                  <button type="button" className="btn-close btn-close-white" aria-label="Cerrar" onClick={closeOrderModal}></button>
                 </div>
 
                 <form onSubmit={handleCrearPedidoRapido}>
                   <div className="modal-body p-4">
-                    <div className="row g-3 mb-3">
-                      <div className="col-md-7">
-                        <label className="form-label fw-bold small">Nombre del Cliente :</label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          placeholder="Ej. Juan Pérez"
-                          value={clienteNombre}
-                          onChange={(e) => setClienteNombre(e.target.value)}
-                          required
-                          minLength={2}
-                          maxLength={60}
-                          pattern="[\p{L}\p{M}]+([ '-][\p{L}\p{M}]+)*"
-                          title="Usa de 2 a 60 caracteres: letras, espacios, apóstrofes o guiones."
-                        />
-                      </div>
-                      <div className="col-md-5">
-                        <label className="form-label fw-bold small">Método de Pago :</label>
-                        <select
-                          className="form-select"
-                          value={metodoPago}
-                          onChange={(e) => setMetodoPago(e.target.value)}
-                          required
-                        >
-                          <option value="Efectivo">Efectivo</option>
-                          <option value="Digital">Tarjeta / Digital</option>
-                        </select>
-                      </div>
-                    </div>
+                    <div className="row g-4">
+                      {/* Columna izquierda: elegir productos */}
+                      <div className="col-12 col-lg-6">
+                        <h6 className="fw-bold mb-2"><i className="bi bi-grid me-1"></i>1. Elige los productos</h6>
+                        <div className="d-flex gap-2 overflow-auto pb-2 mb-2">
+                          {categories.map(c => (
+                            <button
+                              key={c.id}
+                              type="button"
+                              onClick={() => setPickerCategory(c.id)}
+                              className={`btn btn-sm text-nowrap rounded-pill px-3 ${pickerCategory === c.id ? 'btn-danger fw-bold' : 'btn-light border'}`}
+                            >
+                              {c.name}
+                            </button>
+                          ))}
+                        </div>
 
-                    <h6 className="fw-bold mb-2">Artículos en la Orden ({Object.values(cart).reduce((a, b) => a + b, 0)} ítems)</h6>
-                    <div className="table-responsive mb-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                      <table className="table table-sm table-bordered">
-                        <thead className="table-light">
-                          <tr>
-                            <th>Producto</th>
-                            <th>Precio</th>
-                            <th>Cantidad</th>
-                            <th>Subtotal</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {Object.entries(cart).length === 0 ? (
-                            <tr>
-                              <td colSpan="4" className="text-center py-3 text-muted">
-                                No has agregado productos. Usa los botones [+] en el catálogo.
-                              </td>
-                            </tr>
-                          ) : (
-                            Object.entries(cart).map(([pId, qty]) => {
-                              const p = products.find(prod => prod.id === pId);
-                              if (!p) return null;
-                              return (
-                                <tr key={pId}>
-                                  <td>{p.nombre}</td>
-                                  <td>{formatCurrency(p.precio)}</td>
-                                  <td>{qty}</td>
-                                  <td className="fw-bold">{formatCurrency(p.precio * qty)}</td>
+                        <div className="border rounded-3" style={{ maxHeight: '360px', overflowY: 'auto' }}>
+                          {pickerProducts.map(prod => {
+                            const qty = cart[prod.id] || 0;
+                            const sinStock = prod.stock <= 0;
+                            return (
+                              <div key={prod.id} className={`d-flex align-items-center gap-2 p-2 border-bottom ${sinStock ? 'opacity-50' : ''}`}>
+                                <img
+                                  src={prod.img}
+                                  alt={prod.nombre}
+                                  style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }}
+                                  onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = prod.imgFallback || placeholderImg; }}
+                                />
+                                <div className="flex-grow-1" style={{ minWidth: 0 }}>
+                                  <div className="fw-semibold small text-truncate" title={prod.nombre}>{prod.nombre}</div>
+                                  <div className="d-flex align-items-center gap-2">
+                                    <span className="text-danger fw-bold small">{formatCurrency(prod.precio)}</span>
+                                    <span className={`badge ${prod.stock < 5 ? 'bg-danger' : 'bg-secondary'}`}>Stock: {prod.stock}</span>
+                                  </div>
+                                </div>
+                                <div className="qty-counter">
+                                  <button
+                                    type="button"
+                                    className="qty-btn"
+                                    aria-label={`Quitar ${prod.nombre}`}
+                                    disabled={qty <= 0}
+                                    onClick={() => updateQuantity(prod.id, -1)}
+                                  >
+                                    -
+                                  </button>
+                                  <span className="qty-display">{qty}</span>
+                                  <button
+                                    type="button"
+                                    className="qty-btn"
+                                    aria-label={`Agregar ${prod.nombre}`}
+                                    disabled={sinStock || qty >= prod.stock}
+                                    onClick={() => updateQuantity(prod.id, 1)}
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Columna derecha: datos del cliente, resumen y cobro */}
+                      <div className="col-12 col-lg-6">
+                        <h6 className="fw-bold mb-2"><i className="bi bi-receipt me-1"></i>2. Pedido y cobro</h6>
+                        <div className="mb-3">
+                          <label className="form-label fw-bold small mb-1" htmlFor="pedido-cliente">Nombre del Cliente :</label>
+                          <input
+                            id="pedido-cliente"
+                            type="text"
+                            className="form-control"
+                            placeholder="Ej. Juan Pérez"
+                            value={clienteNombre}
+                            onChange={(e) => setClienteNombre(e.target.value)}
+                            required
+                            minLength={2}
+                            maxLength={60}
+                            pattern="[\p{L}\p{M}]+([ '-][\p{L}\p{M}]+)*"
+                            title="Usa de 2 a 60 caracteres: letras, espacios, apóstrofes o guiones."
+                          />
+                        </div>
+
+                        <div className="table-responsive mb-3" style={{ maxHeight: '170px', overflowY: 'auto' }}>
+                          <table className="table table-sm table-bordered mb-0">
+                            <thead className="table-light">
+                              <tr>
+                                <th>Producto</th>
+                                <th>Cant.</th>
+                                <th className="text-end">Subtotal</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {Object.entries(cart).length === 0 ? (
+                                <tr>
+                                  <td colSpan="3" className="text-center py-3 text-muted">
+                                    Aún no hay productos. Usa los botones [+] de la lista.
+                                  </td>
                                 </tr>
-                              );
-                            })
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
+                              ) : (
+                                Object.entries(cart).map(([pId, qty]) => {
+                                  const p = products.find(prod => prod.id === pId);
+                                  if (!p) return null;
+                                  return (
+                                    <tr key={pId}>
+                                      <td>{p.nombre}</td>
+                                      <td>{qty}</td>
+                                      <td className="fw-bold text-end">{formatCurrency(p.precio * qty)}</td>
+                                    </tr>
+                                  );
+                                })
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
 
-                    <div className="p-3 bg-light rounded-3 border d-flex justify-content-between align-items-center">
-                      <span className="fs-5 fw-bold">Total a Cobrar:</span>
-                      <span className="fs-3 fw-bold text-danger">{formatCurrency(cartTotal)}</span>
+                        <div className="p-3 bg-light rounded-3 border d-flex justify-content-between align-items-center mb-3">
+                          <span className="fs-6 fw-bold">Total a Cobrar ({totalItems} ítems):</span>
+                          <span className="fs-3 fw-bold text-danger" data-testid="total-cobrar">{formatCurrency(cartTotal)}</span>
+                        </div>
+
+                        <div className="mb-3">
+                          <label className="form-label fw-bold small mb-1" htmlFor="pedido-metodo">Método de Pago :</label>
+                          <select
+                            id="pedido-metodo"
+                            className="form-select"
+                            value={metodoPago}
+                            onChange={(e) => { setMetodoPago(e.target.value); resetPaymentForm(); }}
+                            required
+                          >
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Tarjeta">Tarjeta</option>
+                          </select>
+                        </div>
+
+                        {metodoPago === 'Efectivo' ? (
+                          <div className="border rounded-3 p-3">
+                            <label className="form-label fw-bold small mb-1" htmlFor="pedido-efectivo">Monto recibido del cliente (USD) :</label>
+                            <div className="input-group mb-2">
+                              <span className="input-group-text">$</span>
+                              <input
+                                id="pedido-efectivo"
+                                type="number"
+                                className={`form-control ${cashHasValue && !cashIsEnough ? 'is-invalid' : ''}`}
+                                placeholder="0.00"
+                                inputMode="decimal"
+                                min="0.01"
+                                max="999999.99"
+                                step="0.01"
+                                value={cashReceived}
+                                onChange={(e) => setCashReceived(e.target.value)}
+                                required
+                              />
+                            </div>
+                            <div className="d-flex flex-wrap gap-2 mb-2">
+                              <button type="button" className="btn btn-sm btn-outline-secondary" disabled={cartTotalCents <= 0} onClick={() => setCashReceived((cartTotalCents / 100).toFixed(2))}>
+                                Exacto
+                              </button>
+                              {[5, 10, 20, 50].map(bill => (
+                                <button key={bill} type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setCashReceived(String(bill))}>
+                                  ${bill}
+                                </button>
+                              ))}
+                            </div>
+                            {!cashHasValue && cartTotalCents > 0 && (
+                              <div className="small text-muted">Escribe con cuánto paga el cliente para calcular el cambio.</div>
+                            )}
+                            {cashHasValue && cashIsEnough && (
+                              <div className={`fw-bold ${changeAmount > 0 ? 'text-success' : 'text-secondary'}`} role="status">
+                                {changeAmount > 0
+                                  ? `Cambio a devolver: ${formatCurrency(changeAmount)}`
+                                  : 'Pago exacto: no hay cambio que devolver.'}
+                              </div>
+                            )}
+                            {cashHasValue && !cashIsEnough && (
+                              <div className="fw-bold text-danger" role="alert">
+                                {receivedCents > 0 && receivedCents < cartTotalCents
+                                  ? `Falta ${formatCurrency((cartTotalCents - receivedCents) / 100)} para cubrir el total.`
+                                  : 'Ingresa un monto válido (máximo 2 decimales).'}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="border rounded-3 p-3">
+                            <div className="p-2 border border-dashed rounded-2 text-center mb-3 bg-light">
+                              <span className="small fw-semibold text-danger d-block">Simulación académica: no uses datos reales</span>
+                              <span className="small text-muted">Los datos solo se validan en esta pantalla; no se envían ni se guardan.</span>
+                            </div>
+                            <div className="mb-2">
+                              <label className="form-label small fw-bold mb-1" htmlFor="tarjeta-nombre">Nombre en la tarjeta</label>
+                              <input
+                                id="tarjeta-nombre"
+                                type="text"
+                                className="form-control"
+                                placeholder="Ej. Juan Pérez"
+                                value={cardForm.name}
+                                onChange={(e) => setCardForm({ ...cardForm, name: e.target.value })}
+                                required
+                                minLength={2}
+                                maxLength={60}
+                                pattern="[\p{L}\p{M}]+([ '-][\p{L}\p{M}]+)*"
+                                autoComplete="off"
+                                title="Usa de 2 a 60 caracteres: letras, espacios, apóstrofes o guiones."
+                              />
+                            </div>
+                            <div className="mb-2">
+                              <label className="form-label small fw-bold mb-1" htmlFor="tarjeta-numero">Número de tarjeta</label>
+                              <input
+                                id="tarjeta-numero"
+                                type="text"
+                                className="form-control"
+                                placeholder="0000 0000 0000 0000"
+                                inputMode="numeric"
+                                autoComplete="off"
+                                maxLength={23}
+                                value={cardForm.number}
+                                onChange={(e) => {
+                                  const digits = e.target.value.replace(/\D/g, '').slice(0, 19);
+                                  setCardForm({ ...cardForm, number: digits.replace(/(.{4})/g, '$1 ').trim() });
+                                }}
+                                required
+                                pattern="[0-9 ]{13,23}"
+                                title="Ingresa un número de tarjeta válido de 13 a 19 dígitos."
+                              />
+                            </div>
+                            <div className="row g-2">
+                              <div className="col-4">
+                                <label className="form-label small fw-bold mb-1" htmlFor="tarjeta-mes">Mes</label>
+                                <input
+                                  id="tarjeta-mes"
+                                  type="text"
+                                  className="form-control"
+                                  placeholder="MM"
+                                  inputMode="numeric"
+                                  autoComplete="off"
+                                  maxLength={2}
+                                  value={cardForm.month}
+                                  onChange={(e) => setCardForm({ ...cardForm, month: e.target.value.replace(/\D/g, '').slice(0, 2) })}
+                                  required
+                                  pattern="(0[1-9]|1[0-2])"
+                                  title="Ingresa un mes entre 01 y 12."
+                                />
+                              </div>
+                              <div className="col-4">
+                                <label className="form-label small fw-bold mb-1" htmlFor="tarjeta-anio">Año</label>
+                                <input
+                                  id="tarjeta-anio"
+                                  type="text"
+                                  className="form-control"
+                                  placeholder="AA"
+                                  inputMode="numeric"
+                                  autoComplete="off"
+                                  maxLength={2}
+                                  value={cardForm.year}
+                                  onChange={(e) => setCardForm({ ...cardForm, year: e.target.value.replace(/\D/g, '').slice(0, 2) })}
+                                  required
+                                  pattern="\d{2}"
+                                  title="Ingresa el año de vencimiento con dos dígitos."
+                                />
+                              </div>
+                              <div className="col-4">
+                                <label className="form-label small fw-bold mb-1" htmlFor="tarjeta-cvv">CVV</label>
+                                <input
+                                  id="tarjeta-cvv"
+                                  type="password"
+                                  className="form-control"
+                                  placeholder="123"
+                                  inputMode="numeric"
+                                  autoComplete="off"
+                                  maxLength={4}
+                                  value={cardForm.cvv}
+                                  onChange={(e) => setCardForm({ ...cardForm, cvv: e.target.value.replace(/\D/g, '').slice(0, 4) })}
+                                  required
+                                  minLength={3}
+                                  pattern="\d{3,4}"
+                                  title="Ingresa un código de seguridad de 3 o 4 dígitos."
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
                   <div className="modal-footer">
-                    <button type="button" className="btn btn-secondary" onClick={() => setShowOrderModal(false)}>
+                    <button type="button" className="btn btn-secondary" onClick={closeOrderModal} disabled={procesando}>
                       Cerrar
                     </button>
-                    <button type="submit" className="btn btn-kfc" style={{ width: 'auto', padding: '0.6rem 2rem' }}>
-                      Confirmar y Cobrar
+                    <button type="submit" className="btn btn-kfc" style={{ width: 'auto', padding: '0.6rem 2rem' }} disabled={procesando}>
+                      {metodoPago === 'Tarjeta' ? `Cobrar ${formatCurrency(cartTotal)}` : 'Confirmar y Cobrar'}
                     </button>
                   </div>
                 </form>
