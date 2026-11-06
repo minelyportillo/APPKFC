@@ -26,6 +26,7 @@ export default function WeatherSidebar({ open, onClose }) {
   const [weather, setWeather] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [mapExpanded, setMapExpanded] = useState(false);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -105,7 +106,43 @@ export default function WeatherSidebar({ open, onClose }) {
           </div>
         )}
 
-        <p className="weather-drawer-credit">Datos meteorológicos de Open-Meteo.</p>
+        <section className={`weather-map-section${mapExpanded ? ' is-expanded' : ''}`} aria-labelledby="weather-map-title">
+          <div className="weather-map-heading">
+            <div>
+              <h3 id="weather-map-title">Torre Futura</h3>
+              <p>San Salvador, El Salvador</p>
+            </div>
+            <button
+              type="button"
+              className="weather-map-expand"
+              onClick={() => setMapExpanded(expanded => !expanded)}
+              aria-expanded={mapExpanded}
+              aria-label={mapExpanded ? 'Reducir mapa' : 'Expandir mapa'}
+            >
+              <i className={`bi ${mapExpanded ? 'bi-arrows-angle-contract' : 'bi-arrows-angle-expand'}`} aria-hidden="true"></i>
+              <span>{mapExpanded ? 'Reducir' : 'Expandir'}</span>
+            </button>
+          </div>
+          <div className="weather-map-frame">
+            <iframe
+              title="Mapa de El Salvador con ubicación en Torre Futura, San Salvador"
+              src="https://www.openstreetmap.org/export/embed.html?bbox=-89.2550%2C13.7020%2C-89.2400%2C13.7125&layer=mapnik&marker=13.7070%2C-89.2475"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+          <a
+            className="weather-map-open-link"
+            href="https://www.openstreetmap.org/?mlat=13.7070&mlon=-89.2475#map=16/13.7070/-89.2475"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <i className="bi bi-geo-alt me-1" aria-hidden="true"></i>Ver mapa completo
+            <i className="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+          </a>
+        </section>
+
+        <p className="weather-drawer-credit">Clima: Open-Meteo · Mapa: OpenStreetMap</p>
         <Link className="weather-drawer-link" to="/clima" onClick={onClose}>
           Ver pronóstico completo <i className="bi bi-arrow-up-right" aria-hidden="true"></i>
         </Link>
