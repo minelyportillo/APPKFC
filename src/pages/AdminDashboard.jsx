@@ -2,17 +2,103 @@ import { useState } from 'react';
 import Swal from 'sweetalert2';
 import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
-import { formatCurrency, formatDate } from '../services/storageService';
+import { formatCurrency, formatDate, isValidEmail, isValidPersonName } from '../services/storageService';
 import MonthlySalesChart from '../components/MonthlySalesChart';
 
+const EMPTY_USER_FORM = { nombre: '', email: '', password: '', rol: 'cajero', telefono: '' };
+
 export default function AdminDashboard() {
-  const { user, products, orders, getUsers, calculateMetrics, updateProductStock } = useAuth();
+  const { user, products, orders, getUsers, registerUser, deleteUser, calculateMetrics, updateProductStock } = useAuth();
 
   const [activeTab, setActiveTab] = useState('menu');
   const [currentCategory, setCurrentCategory] = useState('Combos');
 
-  const usersList = getUsers();
+  const [usersList, setUsersList] = useState(() => getUsers());
+  const [newUser, setNewUser] = useState(EMPTY_USER_FORM);
+  const [formErrors, setFormErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
   const metrics = calculateMetrics();
+
+  const refreshUsers = () => setUsersList(getUsers());
+
+  const validateUserForm = (data) => {
+    const errors = {};
+    if (!isValidPersonName(data.nombre)) {
+      errors.nombre = 'Ingresa un nombre válido (2 a 60 letras).';
+    }
+    if (!isValidEmail(data.email)) {
+      errors.email = 'Ingresa un correo electrónico válido.';
+    }
+    if (data.password.length < 8 || data.password.length > 72) {
+      errors.password = 'La contraseña debe tener entre 8 y 72 caracteres.';
+    }
+    if (data.telefono.trim() && !/^[0-9+\-\s()]{8,15}$/.test(data.telefono.trim())) {
+      errors.telefono = 'Usa solo números (8 a 15 dígitos), por ejemplo 7777-0000.';
+    }
+    if (!['admin', 'cajero'].includes(data.rol)) {
+      errors.rol = 'Selecciona un rol válido.';
+    }
+    return errors;
+  };
+
+  const handleUserFieldChange = (event) => {
+    const { name, value } = event.target;
+    setNewUser(prev => ({ ...prev, [name]: value }));
+    if (formErrors[name]) {
+      setFormErrors(prev => ({ ...prev, [name]: undefined }));
+    }
+  };
+
+  const handleCreateUser = (event) => {
+    event.preventDefault();
+    const errors = validateUserForm(newUser);
+    setFormErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
+    const result = registerUser({
+      nombre: newUser.nombre,
+      email: newUser.email,
+      password: newUser.password,
+      rol: newUser.rol,
+      telefono: newUser.telefono.trim()
+    });
+
+    if (result.success) {
+      setNewUser(EMPTY_USER_FORM);
+      setShowPassword(false);
+      refreshUsers();
+    }
+
+    Swal.fire({
+      title: result.success ? 'Usuario creado' : 'No se pudo crear el usuario',
+      text: result.success ? `La cuenta de ${newUser.nombre.trim()} ya puede iniciar sesión.` : result.message,
+      icon: result.success ? 'success' : 'error',
+      confirmButtonColor: '#E4002B'
+    });
+  };
+
+  const handleDeleteUser = async (target) => {
+    const confirmation = await Swal.fire({
+      title: `¿Eliminar a ${target.nombre}?`,
+      text: 'Esta acción no se puede deshacer. La persona ya no podrá iniciar sesión.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#E4002B'
+    });
+    if (!confirmation.isConfirmed) return;
+
+    const result = deleteUser(target.id);
+    if (result.success) refreshUsers();
+
+    Swal.fire({
+      title: result.success ? 'Usuario eliminado' : 'No se pudo eliminar',
+      text: result.message,
+      icon: result.success ? 'success' : 'error',
+      confirmButtonColor: '#E4002B'
+    });
+  };
 
   const categories = [
     { id: 'Combos', name: 'Combos' },
@@ -247,7 +333,7 @@ export default function AdminDashboard() {
                         <td><code>{prod.id}</code></td>
                         <td>
                           <div className="d-flex align-items-center gap-2">
-                            <img src={prod.img} alt={prod.nombre} style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 6 }} onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = placeholderImg; }} />
+                            <img src={prod.img} alt={prod.nombre} style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 6 }} onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = prod.imgFallback || placeholderImg; }} />
                             <div>
                               <div className="fw-semibold">{prod.nombre}</div>
                               <small className="text-muted">{prod.descripcion}</small>
@@ -426,6 +512,108 @@ export default function AdminDashboard() {
               </button>
             </div>
 
+            <form className="user-form-card mb-4" onSubmit={handleCreateUser} noValidate>
+              <h3 className="fs-5 fw-bold mb-3">
+                <i className="bi bi-person-plus-fill text-danger me-2"></i>Agregar nuevo usuario
+              </h3>
+              <div className="row g-3">
+                <div className="col-12 col-md-6 col-xl-3">
+                  <label htmlFor="nuevo-nombre" className="form-label small fw-semibold">Nombre completo</label>
+                  <input
+                    id="nuevo-nombre"
+                    name="nombre"
+                    type="text"
+                    maxLength={60}
+                    autoComplete="off"
+                    className={`form-control ${formErrors.nombre ? 'is-invalid' : ''}`}
+                    value={newUser.nombre}
+                    onChange={handleUserFieldChange}
+                    placeholder="Ej. María López"
+                  />
+                  <div className="invalid-feedback">{formErrors.nombre}</div>
+                </div>
+
+                <div className="col-12 col-md-6 col-xl-3">
+                  <label htmlFor="nuevo-email" className="form-label small fw-semibold">Correo electrónico</label>
+                  <input
+                    id="nuevo-email"
+                    name="email"
+                    type="email"
+                    maxLength={254}
+                    autoComplete="off"
+                    className={`form-control ${formErrors.email ? 'is-invalid' : ''}`}
+                    value={newUser.email}
+                    onChange={handleUserFieldChange}
+                    placeholder="usuario@kfc.sv"
+                  />
+                  <div className="invalid-feedback">{formErrors.email}</div>
+                </div>
+
+                <div className="col-12 col-md-6 col-xl-2">
+                  <label htmlFor="nuevo-password" className="form-label small fw-semibold">Contraseña</label>
+                  <div className="input-group has-validation">
+                    <input
+                      id="nuevo-password"
+                      name="password"
+                      type={showPassword ? 'text' : 'password'}
+                      maxLength={72}
+                      autoComplete="new-password"
+                      className={`form-control ${formErrors.password ? 'is-invalid' : ''}`}
+                      value={newUser.password}
+                      onChange={handleUserFieldChange}
+                      placeholder="Mínimo 8 caracteres"
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary"
+                      onClick={() => setShowPassword(v => !v)}
+                      aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                    >
+                      <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                    </button>
+                    <div className="invalid-feedback">{formErrors.password}</div>
+                  </div>
+                </div>
+
+                <div className="col-6 col-md-3 col-xl-2">
+                  <label htmlFor="nuevo-rol" className="form-label small fw-semibold">Rol</label>
+                  <select
+                    id="nuevo-rol"
+                    name="rol"
+                    className={`form-select ${formErrors.rol ? 'is-invalid' : ''}`}
+                    value={newUser.rol}
+                    onChange={handleUserFieldChange}
+                  >
+                    <option value="cajero">Cajero</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                  <div className="invalid-feedback">{formErrors.rol}</div>
+                </div>
+
+                <div className="col-6 col-md-3 col-xl-2">
+                  <label htmlFor="nuevo-telefono" className="form-label small fw-semibold">Teléfono <span className="text-muted fw-normal">(opcional)</span></label>
+                  <input
+                    id="nuevo-telefono"
+                    name="telefono"
+                    type="tel"
+                    maxLength={15}
+                    autoComplete="off"
+                    className={`form-control ${formErrors.telefono ? 'is-invalid' : ''}`}
+                    value={newUser.telefono}
+                    onChange={handleUserFieldChange}
+                    placeholder="7777-0000"
+                  />
+                  <div className="invalid-feedback">{formErrors.telefono}</div>
+                </div>
+              </div>
+
+              <div className="d-flex justify-content-end mt-3">
+                <button type="submit" className="btn btn-danger px-4">
+                  <i className="bi bi-person-plus me-2"></i>Crear usuario
+                </button>
+              </div>
+            </form>
+
             <div className="table-responsive">
               <table className="table table-hover align-middle">
                 <thead className="table-light">
@@ -437,13 +625,17 @@ export default function AdminDashboard() {
                     <th>Rol</th>
                     <th>Estado</th>
                     <th>Registrado</th>
+                    <th className="text-end">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {usersList.map(u => (
                     <tr key={u.id}>
                       <td><code>{u.id}</code></td>
-                      <td className="fw-semibold">{u.nombre}</td>
+                      <td className="fw-semibold">
+                        {u.nombre}
+                        {u.id === user?.id && <span className="badge bg-dark ms-2">Tú</span>}
+                      </td>
                       <td>{u.email}</td>
                       <td>{u.telefono || '—'}</td>
                       <td>
@@ -455,6 +647,18 @@ export default function AdminDashboard() {
                         <span className="badge bg-success">Activo</span>
                       </td>
                       <td><small className="text-muted">{formatDate(u.creadoEn, false)}</small></td>
+                      <td className="text-end">
+                        <button
+                          type="button"
+                          className="btn btn-outline-danger btn-sm"
+                          onClick={() => handleDeleteUser(u)}
+                          disabled={u.id === user?.id}
+                          title={u.id === user?.id ? 'No puedes eliminar tu propia cuenta' : `Eliminar a ${u.nombre}`}
+                          aria-label={`Eliminar a ${u.nombre}`}
+                        >
+                          <i className="bi bi-trash3"></i>
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

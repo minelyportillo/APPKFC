@@ -4,8 +4,11 @@ import {
   ESTADOS_PEDIDO,
   INITIAL_MENU,
   INITIAL_ORDERS,
+  mergeMenu,
   isValidEmail,
-  isValidPersonName
+  isValidPersonName,
+  isValidCashAmount,
+  calculateChange
 } from '../services/storageService';
 
 const ROLES = {
@@ -40,7 +43,10 @@ export function AuthProvider({ children }) {
     const storedMenu = localStorage.getItem(STORAGE_KEYS.MENU);
     if (storedMenu) {
       try {
-        setProducts(JSON.parse(storedMenu));
+        // Sincroniza con el catálogo actual (platillos nuevos e imágenes) conservando el stock
+        const syncedMenu = mergeMenu(JSON.parse(storedMenu));
+        setProducts(syncedMenu);
+        localStorage.setItem(STORAGE_KEYS.MENU, JSON.stringify(syncedMenu));
       } catch (e) {
         setProducts(INITIAL_MENU);
         localStorage.setItem(STORAGE_KEYS.MENU, JSON.stringify(INITIAL_MENU));
@@ -221,8 +227,13 @@ export function AuthProvider({ children }) {
       return { success: false, message: 'Ya existe una cuenta con ese correo.' };
     }
 
+    const nextNumber = users.reduce((max, existing) => {
+      const match = /^USR-(\d+)$/.exec(existing?.id || '');
+      return match ? Math.max(max, Number(match[1])) : max;
+    }, 0) + 1;
+
     const newUser = {
-      id: 'USR-' + String(users.length + 1).padStart(2, '0'),
+      id: 'USR-' + String(nextNumber).padStart(2, '0'),
       nombre: nombre.trim(),
       email: email.trim().toLowerCase(),
       password,
@@ -238,6 +249,31 @@ export function AuthProvider({ children }) {
     saveUsers(users);
 
     return { success: true, message: 'Cuenta creada exitosamente.' };
+  };
+
+  /**
+   * Elimina un usuario (solo el administrador). Protege la cuenta en sesión
+   * y evita dejar el sistema sin ningún administrador.
+   */
+  const deleteUser = (userId) => {
+    if (user?.rol !== ROLES.ADMIN) {
+      return { success: false, message: 'Solo un administrador puede eliminar usuarios.' };
+    }
+
+    const users = getUsers();
+    const target = users.find(u => u.id === userId);
+    if (!target) {
+      return { success: false, message: 'El usuario no existe.' };
+    }
+    if (target.id === user.id) {
+      return { success: false, message: 'No puedes eliminar tu propia cuenta mientras tienes la sesión iniciada.' };
+    }
+    if (target.rol === ROLES.ADMIN && users.filter(u => u.rol === ROLES.ADMIN).length <= 1) {
+      return { success: false, message: 'Debe existir al menos un administrador en el sistema.' };
+    }
+
+    saveUsers(users.filter(u => u.id !== userId));
+    return { success: true, message: `La cuenta de ${target.nombre} fue eliminada.` };
   };
 
   /**
@@ -282,7 +318,7 @@ export function AuthProvider({ children }) {
   /**
    * CREATE: Crea un nuevo pedido, descuenta stock del menú y persiste en 'kfc_orders'
    */
-  const createOrder = (paymentMethod = 'Efectivo', clienteNombre = null) => {
+  const createOrder = (paymentMethod = 'Efectivo', clienteNombre = null, paymentDetails = null) => {
     if (Object.keys(cart).length === 0) {
       return { success: false, message: 'Agrega al menos un producto antes de crear el pedido.' };
     }
@@ -293,7 +329,8 @@ export function AuthProvider({ children }) {
       return { success: false, message: 'Ingresa un nombre de cliente válido de 2 a 60 caracteres.' };
     }
 
-    // Validar productos y stock
+    // Validar productos y stock (y calcular el total para validar el efectivo recibido)
+    let totalPrevio = 0;
     for (const [pId, qty] of Object.entries(cart)) {
       const prd = products.find(p => p.id === pId);
       if (!prd) {
@@ -308,6 +345,15 @@ export function AuthProvider({ children }) {
       if (!Number.isInteger(qty) || qty <= 0) {
         return { success: false, message: 'La cantidad de productos del pedido no es válida.' };
       }
+      totalPrevio += prd.precio * qty;
+    }
+
+    // Efectivo: si se informa el monto recibido, debe cubrir el total
+    const montoRecibido = paymentMethod === 'Efectivo' && paymentDetails?.montoRecibido != null
+      ? String(paymentDetails.montoRecibido)
+      : null;
+    if (montoRecibido !== null && !isValidCashAmount(montoRecibido, totalPrevio)) {
+      return { success: false, message: 'El monto recibido no es válido o no cubre el total del pedido.' };
     }
 
     // Descontar inventario
@@ -354,6 +400,12 @@ export function AuthProvider({ children }) {
       tipoPago: paymentMethod,
       estado: ESTADOS_PEDIDO.PENDIENTE
     };
+
+    // Solo se guarda lo necesario del pago en efectivo; nunca datos de tarjeta
+    if (montoRecibido !== null) {
+      newOrder.montoRecibido = parseFloat(montoRecibido);
+      newOrder.cambio = calculateChange(montoRecibido, total);
+    }
 
     const updatedOrders = [newOrder, ...orders];
     setOrders(updatedOrders);
@@ -476,6 +528,7 @@ export function AuthProvider({ children }) {
       login,
       logout,
       registerUser,
+      deleteUser,
       getUsers,
       ROLES,
       products,

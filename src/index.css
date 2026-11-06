@@ -401,7 +401,9 @@ body {
 }
 
 .kfc-product-img {
-  height: 150px;
+  /* Cuadrada: las fotos de los combos son 1:1 y así no se recorta el letrero ni la bebida */
+  aspect-ratio: 1 / 1;
+  height: auto;
   margin-bottom: 0.75rem;
 }
 
@@ -409,11 +411,6 @@ body {
   height: 110px;
 }
 
-@media (min-width: 768px) {
-  .kfc-product-img {
-    height: 170px;
-  }
-}
 
 .qty-counter {
   display: inline-flex;
@@ -602,4 +599,13 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+
+/* Formulario de alta de usuarios (panel de administración) */
+.user-form-card {
+  background: #fffaf9;
+  border: 2px solid var(--kfc-border);
+  border-radius: 14px;
+  padding: 1.25rem;
 }
