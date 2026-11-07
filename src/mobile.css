@@ -1,0 +1,154 @@
+/* Additional narrow-screen refinements. Keep these rules after the shared theme. */
+@media (max-width: 575.98px) {
+  /* Keep the login form readable and comfortably inset on narrow phones. */
+  main.container.min-vh-100 {
+    min-height: 100svh !important;
+    padding-inline: 0.75rem;
+    padding-block: 1.25rem;
+  }
+
+  main.container.min-vh-100 > section {
+    max-width: 100% !important;
+    border-radius: 1rem;
+  }
+
+  main.container.min-vh-100 .card-body {
+    padding: 1.25rem !important;
+  }
+
+  /* Product cards have more room for names, prices, and quantity controls. */
+  .kfc-app-container .row:has(> .col-6 .kfc-product-card) > .col-6 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  .kfc-product-card {
+    display: grid;
+    grid-template-columns: minmax(88px, 34%) minmax(0, 1fr);
+    grid-template-rows: 1fr auto;
+    align-items: center;
+    column-gap: 0.85rem;
+    padding: 0.75rem;
+  }
+
+  .kfc-product-card > div:first-child {
+    display: contents;
+  }
+
+  .kfc-product-img {
+    grid-row: 1 / span 2;
+    grid-column: 1;
+    margin: 0;
+    align-self: stretch;
+    min-height: 88px;
+    max-height: 128px;
+  }
+
+  .kfc-product-card > div:first-child > .fw-bold {
+    grid-column: 2;
+    align-self: end;
+    white-space: normal;
+  }
+
+  .kfc-product-card > div:first-child > .d-flex {
+    grid-column: 2;
+    justify-content: flex-start !important;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .kfc-product-card > div:last-child {
+    grid-column: 2;
+    justify-content: flex-start !important;
+    gap: 0.6rem;
+    margin-top: 0.4rem !important;
+    padding-top: 0.4rem !important;
+  }
+
+  .kfc-category-img {
+    height: auto;
+    aspect-ratio: 4 / 3;
+  }
+
+  /* Prevent the cashier order dialog from being vertically clipped by the viewport. */
+  .modal.show.d-block {
+    align-items: flex-start;
+    padding: 0.25rem 0;
+  }
+
+  .modal.show.d-block .modal-dialog {
+    width: auto;
+    max-width: none;
+    margin: 0.5rem;
+  }
+
+  .modal.show.d-block .modal-content {
+    max-height: calc(100svh - 1rem);
+  }
+
+  .modal.show.d-block form {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .modal.show.d-block .modal-body {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .modal.show.d-block .modal-header {
+    padding: 0.85rem 1rem;
+  }
+
+  .modal.show.d-block .modal-title {
+    font-size: 1rem;
+    padding-right: 0.5rem;
+  }
+
+  .modal.show.d-block .modal-footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .modal.show.d-block .modal-footer > button {
+    width: 100% !important;
+    margin: 0;
+  }
+
+  /* Let long report controls wrap instead of forcing the entire page wider. */
+  .sales-chart-actions {
+    width: 100%;
+  }
+
+  .sales-chart-actions .form-control {
+    flex: 1 1 100%;
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .kfc-header-bar {
+    padding-inline: 0.5rem;
+  }
+
+  .kfc-header-link {
+    padding-inline: 0.4rem;
+  }
+
+  .kfc-main-content {
+    padding-inline: 0.5rem;
+  }
+
+  .kfc-content-card,
+  .sales-chart-box {
+    padding: 0.75rem;
+  }
+
+  .kfc-product-card {
+    grid-template-columns: 78px minmax(0, 1fr);
+    column-gap: 0.6rem;
+  }
+}
