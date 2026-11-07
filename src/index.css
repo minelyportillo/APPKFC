@@ -35,6 +35,7 @@ body {
   font-family: 'Montserrat', sans-serif;
   color: #1a1a1a;
   min-height: 100vh;
+  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -49,6 +50,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 .kfc-main-content {
@@ -81,6 +83,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem;
 }
 
 .kfc-header-logo-badge {
@@ -94,6 +97,7 @@ body {
   text-decoration: none;
   border: 2px solid #fff;
   transition: transform 0.2s ease;
+  flex-shrink: 0;
 }
 
 .kfc-header-logo-badge:hover {
@@ -111,7 +115,10 @@ body {
 .kfc-header-actions {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  flex: 1 1 auto;
 }
 
 .kfc-header-link {
@@ -127,6 +134,8 @@ body {
   transition: background-color 0.2s ease, opacity 0.2s ease;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
 .kfc-header-link:hover {
@@ -401,7 +410,6 @@ body {
 }
 
 .kfc-product-img {
-  /* Cuadrada: las fotos de los combos son 1:1 y así no se recorta el letrero ni la bebida */
   aspect-ratio: 1 / 1;
   height: auto;
   margin-bottom: 0.75rem;
@@ -410,7 +418,6 @@ body {
 .kfc-category-img {
   height: 110px;
 }
-
 
 .qty-counter {
   display: inline-flex;
@@ -520,6 +527,7 @@ body {
   border-radius: 999px;
   padding: 0.48rem 0.72rem;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .form-control,
@@ -560,35 +568,104 @@ body {
   background: linear-gradient(135deg, var(--kfc-red) 0%, #bd001f 100%) !important;
 }
 
-@media (max-width: 576px) {
+@media (max-width: 767.98px) {
   .kfc-header-bar {
     min-height: 70px;
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .kfc-header-inner {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .kfc-header-logo-badge {
+    width: 46px;
+    height: 46px;
   }
 
   .kfc-header-logo-badge img {
     height: 38px;
+    width: 38px;
   }
 
   .kfc-header-actions {
-    gap: 0.8rem;
+    width: 100%;
+    justify-content: flex-end;
+    gap: 0.45rem;
   }
 
   .kfc-header-link {
-    font-size: 0.88rem;
+    font-size: 0.76rem;
+    padding: 0.45rem 0.55rem;
   }
 
   .kfc-main-content {
-    padding: 1rem 0.75rem;
+    padding: 1rem 0.75rem 1.5rem;
   }
 
   .welcome-banner {
     padding: 1.1rem 1rem;
   }
 
+  .welcome-banner h2 {
+    font-size: clamp(1.3rem, 6vw, 1.9rem);
+  }
+
   .kfc-content-card,
   .sales-chart-box {
     padding: 1rem;
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .modal-dialog {
+    margin: 0.5rem;
+  }
+
+  .modal-body {
+    padding: 1rem !important;
+  }
+
+  .modal-footer {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+  }
+
+  .modal-footer > * {
+    width: 100%;
+  }
+
+  .kfc-app-container:has(.kfc-header-admin) .kfc-main-content::before {
+    padding: 1rem;
+    font-size: 0.72rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .kfc-header-link {
+    font-size: 0.7rem;
+    padding: 0.42rem 0.5rem;
+  }
+
+  .kfc-header-link .me-1 {
+    margin-right: 0.2rem !important;
+  }
+
+  .kfc-header-actions {
+    gap: 0.3rem;
+  }
+
+  .stat-card {
+    padding: 0.9rem 0.8rem;
+  }
+
+  .stat-number {
+    font-size: 1.3rem;
   }
 }
 
@@ -601,8 +678,6 @@ body {
   }
 }
 
-
-/* Formulario de alta de usuarios (panel de administración) */
 .user-form-card {
   background: #fffaf9;
   border: 2px solid var(--kfc-border);
