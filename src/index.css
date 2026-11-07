@@ -114,6 +114,93 @@ body {
   gap: 1.5rem;
 }
 
+.corte-header {
+  background: #fff;
+  border: 1px solid var(--kfc-border);
+  border-radius: 18px;
+  padding: 1.5rem 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--kfc-shadow-sm);
+}
+
+.corte-header-icon {
+  font-size: 3.5rem;
+  color: var(--kfc-red);
+  opacity: 0.85;
+}
+
+.corte-stat-card {
+  background: #fff;
+  border: 1px solid var(--kfc-border);
+  border-top: 4px solid #525252;
+  border-radius: 14px;
+  padding: 1.2rem 1.3rem;
+  box-shadow: var(--kfc-shadow-sm);
+}
+
+.corte-stat-card span,
+.corte-stat-card small {
+  display: block;
+  color: var(--kfc-gray-text);
+}
+
+.corte-stat-card strong {
+  display: block;
+  font-size: 1.7rem;
+  margin: 0.35rem 0;
+}
+
+.corte-stat-card-total {
+  border-top-color: var(--kfc-red);
+}
+
+.corte-stat-card-total strong {
+  color: var(--kfc-red);
+}
+
+.corte-report-card {
+  max-width: 860px;
+}
+
+.corte-summary-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--kfc-border);
+}
+
+.corte-summary-list > div strong {
+  white-space: nowrap;
+}
+
+.corte-remesa {
+  color: var(--kfc-red);
+  font-size: 1.2rem;
+  font-weight: 800;
+  border-bottom: 0 !important;
+}
+
+@media (max-width: 640px) {
+  .corte-header {
+    padding: 1.2rem;
+  }
+
+  .corte-header-icon {
+    font-size: 2.5rem;
+  }
+
+  .corte-report-card .d-flex {
+    flex-direction: column;
+  }
+
+  .corte-report-card .btn {
+    width: 100%;
+  }
+}
+
 .kfc-header-link {
   color: #ffffff;
   font-weight: 700;

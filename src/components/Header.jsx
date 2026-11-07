@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import WeatherSidebar from './WeatherSidebar';
 import './weather-sidebar.css';
 
-export default function Header({ title = null, showCart = true, backToMenu = false }) {
+export default function Header({ title = null, showCart = true, dashboardStyle = false }) {
   const { logout, cart, user, ROLES } = useAuth();
-  const navigate = useNavigate();
   const [weatherOpen, setWeatherOpen] = useState(false);
 
   const totalItems = Object.values(cart).reduce((sum, quantity) => sum + quantity, 0);
@@ -15,7 +14,7 @@ export default function Header({ title = null, showCart = true, backToMenu = fal
 
   return (
     <>
-      <header className={`kfc-header-bar${isAdmin ? ' kfc-header-admin' : ''}`}>
+      <header className={`kfc-header-bar${isAdmin ? ' kfc-header-admin' : ''}${dashboardStyle ? ' kfc-header-dashboard' : ''}`}>
         <div className="kfc-header-inner">
           <Link to={homePath} className="kfc-header-logo-badge" aria-label="Ir al inicio">
             <img src="/logo1.png" alt="KFC Logo" />
@@ -28,13 +27,14 @@ export default function Header({ title = null, showCart = true, backToMenu = fal
           )}
 
           <div className="kfc-header-actions">
-            {backToMenu ? (
-              <button onClick={() => navigate(-1)} className="kfc-header-link" type="button">
-                <i className="bi bi-arrow-left me-1"></i> Volver al menú
-              </button>
-            ) : (
-              <Link to={homePath} className="kfc-header-link">
-                <i className="bi bi-grid me-1 d-none d-sm-inline"></i> Menú
+            {!isAdmin && (
+              <Link to="/corte-caja" className="kfc-header-link">
+                <i className="bi bi-receipt-cutoff me-1 d-none d-sm-inline"></i> Corte de caja
+              </Link>
+            )}
+            {isAdmin && (
+              <Link to="/admin/cierres-caja" className="kfc-header-link">
+                <i className="bi bi-calendar2-check me-1 d-none d-sm-inline"></i> Cierres
               </Link>
             )}
 

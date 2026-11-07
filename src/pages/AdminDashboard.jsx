@@ -130,9 +130,9 @@ export default function AdminDashboard() {
 
   return (
     <div className="kfc-app-container">
-      <Header title="Panel de Administración" showCart={false} />
+      <Header title="Panel de Administración" showCart={false} dashboardStyle />
 
-      <main className="kfc-main-content">
+      <main className="kfc-main-content kfc-dashboard-main">
         {/* Métricas Principales */}
         <div className="row g-3 mb-4">
           <div className="col-12 col-sm-6 col-lg-3">
@@ -262,6 +262,19 @@ export default function AdminDashboard() {
                     <i className="bi bi-scooter text-dark" style={{ fontSize: '4.5rem' }}></i>
                   </div>
                   <span className="small text-muted fw-bold mt-2">{orders.length} pedidos auditados</span>
+                </div>
+              </div>
+
+              <div className="col-12 col-sm-6 col-lg-3">
+                <div
+                  className="admin-action-btn-card"
+                  onClick={() => window.location.assign('/admin/cierres-caja')}
+                >
+                  <div className="admin-card-tag">Cierres de caja</div>
+                  <div className="d-flex align-items-center justify-content-center flex-grow-1 py-3">
+                    <i className="bi bi-calendar2-check text-danger" style={{ fontSize: '4.5rem' }}></i>
+                  </div>
+                  <span className="small text-muted fw-bold mt-2">Audita cierres por mes</span>
                 </div>
               </div>
 
