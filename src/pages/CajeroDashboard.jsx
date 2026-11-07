@@ -231,9 +231,9 @@ export default function CajeroDashboard() {
 
   return (
     <div className="kfc-app-container">
-      <Header title="Panel de Cajero" showCart={true} />
+      <Header title="Panel de Cajero" showCart={true} dashboardStyle />
 
-      <main className="kfc-main-content">
+      <main className="kfc-main-content kfc-dashboard-main">
         {/* Banner de Bienvenida y Acción Rápida */}
         <div className="welcome-banner mb-4">
           <div className="row align-items-center">
@@ -886,4 +886,3 @@ export default function CajeroDashboard() {
     </div>
   );
 }
-

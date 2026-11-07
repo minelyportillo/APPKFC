@@ -24,6 +24,7 @@ export function AuthProvider({ children }) {
   const [cart, setCart] = useState({});
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [cashCuts, setCashCuts] = useState([]);
 
   useEffect(() => {
     // 1. Inicializar Usuarios Semilla
@@ -70,6 +71,16 @@ export function AuthProvider({ children }) {
       const defaultOrders = INITIAL_ORDERS();
       setOrders(defaultOrders);
       localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(defaultOrders));
+    }
+
+    const storedCashCuts = localStorage.getItem(STORAGE_KEYS.CASH_CUTS);
+    if (storedCashCuts) {
+      try {
+        const parsedCashCuts = JSON.parse(storedCashCuts);
+        setCashCuts(Array.isArray(parsedCashCuts) ? parsedCashCuts : []);
+      } catch (e) {
+        localStorage.removeItem(STORAGE_KEYS.CASH_CUTS);
+      }
     }
 
     setLoading(false);
@@ -495,7 +506,15 @@ export function AuthProvider({ children }) {
    */
   const calculateMetrics = () => {
     const hoyStr = new Date().toISOString().slice(0, 10);
-    const pedidosHoy = orders.filter(o => o.fecha && o.fecha.startsWith(hoyStr));
+    // Los cortes solo delimitan el resumen operativo del cajero.
+    // El administrador conserva métricas globales e históricas completas.
+    const ultimoCorte = user?.rol === ROLES.CAJERO && cashCuts.length > 0
+      ? cashCuts[cashCuts.length - 1].at
+      : null;
+    const pedidosHoy = orders.filter(o => {
+      if (!o.fecha) return false;
+      return ultimoCorte ? o.fecha > ultimoCorte : o.fecha.startsWith(hoyStr);
+    });
 
     const ventasDelDia = pedidosHoy
       .filter(o => o.estado !== ESTADOS_PEDIDO.CANCELADO)
@@ -541,6 +560,44 @@ export function AuthProvider({ children }) {
       cancelOrder,
       orders,
       calculateMetrics,
+      cashCuts,
+      makeCashCut: () => {
+        const lastCutAt = cashCuts.length > 0 ? cashCuts[cashCuts.length - 1].at : null;
+        const closedOrders = orders.filter(order => {
+          if (!order?.fecha || order.estado === ESTADOS_PEDIDO.CANCELADO) return false;
+          return lastCutAt ? order.fecha > lastCutAt : order.fecha.slice(0, 10) === new Date().toISOString().slice(0, 10);
+        });
+        const efectivo = closedOrders
+          .filter(order => order.tipoPago === 'Efectivo')
+          .reduce((sum, order) => sum + Number(order.total || 0), 0);
+        const tarjeta = closedOrders
+          .filter(order => order.tipoPago === 'Tarjeta' || order.tipoPago === 'Digital')
+          .reduce((sum, order) => sum + Number(order.total || 0), 0);
+        const newCut = {
+          id: `CORTE-${Date.now()}`,
+          at: new Date().toISOString(),
+          cajeroId: user?.id || 'USR-SISTEMA',
+          cajeroNombre: user?.nombre || 'Cajero de turno',
+          pedidos: closedOrders.length,
+          efectivo: Number(efectivo.toFixed(2)),
+          tarjeta: Number(tarjeta.toFixed(2)),
+          total: Number((efectivo + tarjeta).toFixed(2)),
+          remesa: Number(efectivo.toFixed(2))
+        };
+        const updatedCuts = [...cashCuts, newCut];
+        setCashCuts(updatedCuts);
+        localStorage.setItem(STORAGE_KEYS.CASH_CUTS, JSON.stringify(updatedCuts));
+        return { success: true, corte: newCut };
+      },
+      revertCashCut: () => {
+        if (cashCuts.length === 0) {
+          return { success: false, message: 'No existe un corte para revertir.' };
+        }
+        const updatedCuts = cashCuts.slice(0, -1);
+        setCashCuts(updatedCuts);
+        localStorage.setItem(STORAGE_KEYS.CASH_CUTS, JSON.stringify(updatedCuts));
+        return { success: true };
+      },
       ESTADOS_PEDIDO
     }}>
       {children}

@@ -6,6 +6,8 @@ import AdminDashboard from './pages/AdminDashboard';
 import CajeroDashboard from './pages/CajeroDashboard';
 import OrderView from './pages/OrderView';
 import WeatherPage from './pages/WeatherPage';
+import CorteCaja from './pages/CorteCaja';
+import AdminCortesCaja from './pages/AdminCortesCaja';
 
 function RootRedirect() {
   const { user, ROLES } = useAuth();
@@ -53,6 +55,24 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={['admin', 'cajero']}>
                 <WeatherPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/corte-caja"
+            element={
+              <ProtectedRoute allowedRoles={['cajero']}>
+                <CorteCaja />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/cierres-caja"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminCortesCaja />
               </ProtectedRoute>
             }
           />

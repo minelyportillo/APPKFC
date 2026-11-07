@@ -12,7 +12,8 @@ export const STORAGE_KEYS = {
   USERS: 'kfc_users',
   SESSION: 'kfc_session',
   MENU: 'kfc_menu',
-  ORDERS: 'kfc_orders'
+  ORDERS: 'kfc_orders',
+  CASH_CUTS: 'kfc_cash_cuts'
 };
 
 export const ESTADOS_PEDIDO = {
