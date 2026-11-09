@@ -1,4 +1,5 @@
 # Sistema web de gestión operativa KFC
+lea ETAPA 3 FORO 2
 
 Aplicación web frontend para apoyar la operación de un comercio KFC. Incluye flujos de caja y pedidos, control de inventario, gestión de usuarios y reportes de ventas. El proyecto está desarrollado con React y Vite; no es una entrega de HTML/CSS/JavaScript sin framework.
 
