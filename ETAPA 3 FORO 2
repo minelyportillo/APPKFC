@@ -1,0 +1,146 @@
+ 
+UNIVERSIDAD DON BOSCO
+
+ ETAPA 3 FORO 2
+Documento de avance etapa 3 Foro 2
+
+
+   📋  Información General
+
+Asignatura:	Desarrollo de Aplicaciones Web con Software Interpretados en el Cliente
+Docente:	Alexander Sigüenza
+Actividad:	ETAPA 3 Foro 2
+
+   👥  Integrantes del Equipo
+Integrante 1:	Pablo Ernesto Vanegas Gámez – EV232903
+Integrante 2:	Keisy Minely Portillo Colocho – PC171198
+Integrante 3:	Josue Amilcar Castro Osorio – CO251195
+Integrante 4:	
+
+
+   📅  Fecha de Entrega
+Fecha:  8/11/2026
+
+
+
+
+
+Integración de React y consumo de API externa en el sistema de pedidos KFC
+Introducción
+El proyecto de la asignatura es una aplicación web para la gestión de pedidos de un restaurante de comida rápida, tomando como caso de estudio a KFC. El sistema distingue dos roles, administrador y cajero, y ofrece vistas para el menú, el registro de pedidos, el cobro, los reportes de ventas, el corte de caja y la consulta del clima. En esta segunda entrega de avance se integra un framework de JavaScript, en este caso React, como base de la arquitectura de componentes, se consume una API externa con datos reales y se documentan los módulos secundarios, el manejo de estado y los componentes reutilizables.
+Este documento explica qué es React, por qué se eligió, cómo se aplicó en el proyecto y qué decisiones técnicas se tomaron. Los ejemplos provienen del código del repositorio del grupo, de modo que cada afirmación puede verificarse directamente en los archivos de la aplicación.
+Framework seleccionado: React
+¿Qué es React?
+React es una biblioteca de JavaScript para construir interfaces de usuario a partir de piezas independientes llamadas componentes. Un componente es una función de JavaScript que devuelve marcado, escrito en JSX, y que puede recibir datos mediante propiedades (props) para mostrarse de distintas maneras (Meta Open Source, s. f.-a; s. f.-d). En lugar de modificar el DOM manualmente, el desarrollador describe cómo debe verse la interfaz para un estado dado y React se encarga de actualizarla cuando ese estado cambia.
+
+La documentación oficial recomienda diseñar una aplicación dividiéndola en una jerarquía de componentes, identificando el estado mínimo necesario y decidiendo en qué componente debe vivir (Meta Open Source, s. f.-c). El proyecto sigue ese enfoque: cada vista es un componente de página, y las piezas que se repiten, como el encabezado o la ruta protegida, son componentes compartidos.
+Justificación de la elección
+La consigna del avance permite elegir entre AngularJS y React. El grupo seleccionó React por las siguientes razones, todas comprobables en el proyecto:
+•	Los componentes funcionales y los hooks permiten reutilizar lógica y vistas con poco código. Por ejemplo, el mismo encabezado se usa en las vistas del administrador y del cajero.
+•	El estado compartido entre vistas, como la sesión, el carrito y los pedidos, se resuelve con la API de contexto incluida en la propia biblioteca, sin dependencias adicionales (Meta Open Source, s. f.-b).
+•	Existe un ecosistema maduro para lo que el sistema necesita: enrutamiento por vistas, gráficos, alertas y generación de PDF.
+•	Su curva de aprendizaje es manejable para un equipo universitario y la documentación oficial incluye ejemplos y ejercicios interactivos.
+Herramientas del ecosistema utilizadas
+El proyecto usa React 19 con Vite como herramienta de construcción y servidor de desarrollo (Vite, s. f.). Para la navegación entre vistas se emplea React Router (React Router, s. f.) y para el diseño visual y la adaptación a distintos tamaños de pantalla, Bootstrap 5 junto con Bootstrap Icons (Bootstrap, s. f.). Además se usan Chart.js para los gráficos de ventas, SweetAlert2 para los cuadros de diálogo y jsPDF para generar reportes en PDF. Todas estas dependencias se declaran en el archivo package.json del repositorio.
+Arquitectura de la aplicación
+Organización por capas
+El código fuente se organiza en cuatro carpetas con responsabilidades separadas, como se resume en la Tabla 1. Esta separación evita mezclar la lógica de negocio con la presentación y facilita que varios integrantes trabajen en archivos distintos sin conflictos.
+Tabla 1
+Estructura de carpetas del código fuente
+Carpeta	Contenido	Responsabilidad
+pages	Login, AdminDashboard, CajeroDashboard, OrderView, WeatherPage, CorteCaja, AdminCortesCaja	Vistas completas asociadas a una ruta
+components	Header, ProtectedRoute, WeatherSidebar, MonthlySalesChart	Piezas reutilizables entre vistas
+context	AuthContext	Estado global y reglas de negocio
+services	storageService, weatherService	Persistencia, validaciones y acceso a la API externa
+
+Nota. Elaboración propia a partir del repositorio del proyecto.
+Componentes reutilizables
+Los componentes de la carpeta components se diseñaron para usarse en más de una vista. El componente Header, por ejemplo, recibe propiedades como el título, si se muestra el carrito, si se aplica el estilo de panel o si se ofrece un botón para volver al menú. Según el rol de la sesión, muestra además enlaces distintos: el administrador ve el acceso a los cierres de caja y el cajero ve el acceso al corte de caja. De este modo un solo componente sirve a todas las pantallas y cualquier cambio de diseño se hace en un único lugar.
+El componente ProtectedRoute envuelve las vistas privadas y decide qué mostrar según la sesión y el rol. El componente WeatherSidebar presenta el clima en un panel lateral accesible desde el encabezado, y MonthlySalesChart encapsula el gráfico de ventas mensuales y la exportación de reportes. Cada uno recibe lo que necesita por propiedades o desde el contexto, lo que evita duplicar código.
+Manejo de estado
+Estado local con hooks
+Cada componente guarda su propio estado con el hook useState cuando la información solo le interesa a él. Por ejemplo, la página del clima mantiene el estado de los datos recibidos, de la carga, del mensaje de error y de si el mapa está expandido. Para ejecutar acciones al montar un componente, como pedir datos a la API, se usa useEffect, y para evitar cálculos repetidos se usa useMemo; así, la vista de corte de caja recalcula los totales de efectivo y tarjeta únicamente cuando cambian los pedidos o los cortes registrados (Meta Open Source, s. f.-c).
+Estado global con Context API
+La información que necesitan varias vistas a la vez vive en un contexto de React llamado AuthContext. Allí se guardan la sesión del usuario, el estado de carga inicial, el carrito, el catálogo de productos, los pedidos y los cortes de caja. El contexto también expone las operaciones que modifican esos datos, como crear un pedido, cancelar un pedido, crear o eliminar usuarios, realizar un corte de caja o revertir el último corte. Las vistas acceden a todo ello mediante un hook personalizado, useAuth, que simplifica el consumo del contexto y evita pasar propiedades a través de muchos niveles de componentes (Meta Open Source, s. f.-b).
+Centralizar las reglas de negocio en el contexto garantiza que todas las pantallas apliquen los mismos criterios. Por ejemplo, el resumen operativo del cajero se delimita por el último corte de caja realizado, mientras que el administrador conserva siempre las métricas globales e históricas.
+Persistencia en el navegador
+Como el sistema no cuenta con un servidor propio, los datos se guardan en el almacenamiento local del navegador (localStorage), una función de la API Web Storage que conserva pares clave-valor entre sesiones (MDN Web Docs, s. f.). Las claves se definen en un solo objeto del servicio de almacenamiento: usuarios, sesión, menú, pedidos y cortes de caja. Al iniciar la aplicación, el contexto lee esos valores dentro de un bloque try/catch, de modo que si algún dato estuviera dañado se descarta sin romper la aplicación.
+Enrutamiento y control de acceso por rol
+La navegación entre vistas se define en el componente App con React Router. Cada ruta se envuelve en ProtectedRoute con la lista de roles permitidos: si no hay sesión, se redirige al inicio de sesión, y si el rol no corresponde, se redirige al panel que le pertenece. Las rutas disponibles se muestran en la Tabla 2.
+Tabla 2
+Rutas de la aplicación y roles autorizados
+Ruta	Rol	Vista
+/login	Público	Inicio de sesión con validación de campos
+/admin	Administrador	Panel con ventas, inventario, empleados y usuarios
+/admin/cierres-caja	Administrador	Consulta mensual de cortes de caja
+/cajero	Cajero	Menú, historial de pedidos y registro de pedidos
+/orden	Cajero	Resumen de la orden y cobro en efectivo o tarjeta
+/corte-caja	Cajero	Corte de caja del turno con reporte en PDF
+/clima	Administrador y cajero	Clima actual y mapa de referencia
+Consumo de API externa
+Open-Meteo
+El sistema consume la API de pronóstico de Open-Meteo, un servicio gratuito de datos meteorológicos que no requiere clave de acceso para uso no comercial (Open-Meteo, s. f.). Se consulta el clima actual de San Salvador con las coordenadas 13.6929 de latitud y -89.2182 de longitud, solicitando tres variables: temperatura, humedad relativa y código de condición del tiempo. La información se muestra en la página de clima y en un panel lateral accesible desde el encabezado de cualquier vista.
+La llamada a la API se aisló en un servicio independiente, de modo que los componentes no conocen la dirección ni los parámetros de la consulta:
+export async function getSanSalvadorWeather() {
+  const params = new URLSearchParams({
+    latitude: '13.6929',
+    longitude: '-89.2182',
+    current: 'temperature_2m,relative_humidity_2m,weather_code'
+  });
+  const response = await fetch(`${WEATHER_URL}?${params}`);
+  if (!response.ok) throw new Error('No se pudo consultar el clima.');
+  const data = await response.json();
+  if (!data.current) throw new Error('La API no devolvió datos.');
+  return data;
+}
+Manejo de carga y de errores
+El componente que usa el servicio mantiene tres estados: los datos, un indicador de carga y un mensaje de error. Mientras la petición está en curso muestra un indicador de espera, si la API falla muestra un mensaje de aviso y el usuario puede volver a consultar con el botón Actualizar, y si responde correctamente presenta los valores traducidos a texto comprensible para el usuario. Así la aplicación no se queda en blanco ni muestra errores técnicos cuando no hay conexión.
+Mapa de OpenStreetMap
+Junto al clima se incorporó un mapa incrustado de OpenStreetMap con un punto de referencia en San Salvador, que puede expandirse o reducirse con un botón y que enlaza al mapa completo. Los datos cartográficos pertenecen a los colaboradores de OpenStreetMap y se acreditan en la página, tal como exige su licencia (OpenStreetMap Foundation, s. f.).
+Módulos secundarios
+Además del flujo principal de pedidos, el sistema incluye módulos secundarios con lógica de negocio propia, resumidos en la Tabla 3.
+Tabla 3
+Módulos secundarios y su lógica de negocio
+Módulo	Rol	Lógica principal
+Gestión de usuarios	Administrador	Crear y eliminar usuarios con validación de campos y confirmación antes de borrar
+Reportes de ventas	Administrador	Gráfico mensual con Chart.js y exportación a PDF con la gráfica incluida y a CSV
+Cobro en efectivo	Cajero	Captura el monto recibido, valida que cubra el total y calcula el cambio
+Cobro con tarjeta	Cajero	Valida número, vencimiento y código; simula el cobro y confirma el pago
+Registro de pedidos	Cajero	Selección de productos por categoría, carrito, total y método de pago
+Corte de caja	Cajero	Suma efectivo y tarjeta desde el último corte, calcula la remesa y genera un PDF
+Cierres de caja	Administrador	Auditoría de los cortes filtrados por mes con totales
+Clima y mapa	Ambos	Consulta a Open-Meteo y mapa de referencia
+
+
+
+Validación de datos y seguridad básica
+Todos los formularios validan sus datos antes de procesarlos. En los cobros se aplicaron técnicas específicas. Los montos de dinero se convierten a centavos enteros antes de operar, para evitar los errores de redondeo propios de los números decimales de JavaScript; por ejemplo, 20 menos 13.99 puede dar un resultado inexacto con decimales, pero es exacto con centavos:
+export function toCents(amount) {
+  return Math.round((parseFloat(amount) || 0) * 100);
+}
+export function calculateChange(received, total) {
+  return (toCents(received) - toCents(total)) / 100;
+}
+El número de tarjeta se verifica con el algoritmo de Luhn, que detecta números mal digitados, y también se validan la fecha de vencimiento y el código de seguridad. El pago con tarjeta es una simulación: el sistema muestra un proceso de cobro y confirma la operación, pero no guarda el número, el vencimiento ni el código de la tarjeta en ningún almacenamiento. La API de clima utilizada no necesita clave, por lo que el repositorio público no contiene claves de servicios externos.
+Cabe aclarar una limitación propia de un prototipo académico: la autenticación y los datos se manejan en el navegador, por lo que no sustituyen a un servidor con base de datos y cifrado. En un sistema real, las credenciales y los pagos deberían gestionarse en un servidor y con una pasarela de pago certificada.
+
+
+
+
+Referencias
+Bootstrap. (s. f.). Introduction. https://getbootstrap.com/docs/5.3/getting-started/introduction/
+MDN Web Docs. (s. f.). Web Storage API. Mozilla. https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API
+Meta Open Source. (s. f.-a). Passing props to a component. React. https://react.dev/learn/passing-props-to-a-component
+Meta Open Source. (s. f.-b). Scaling up with reducer and context. React. https://react.dev/learn/scaling-up-with-reducer-and-context
+Meta Open Source. (s. f.-c). Thinking in React. React. https://react.dev/learn/thinking-in-react
+Meta Open Source. (s. f.-d). Your first component. React. https://react.dev/learn/your-first-component
+Open-Meteo. (s. f.). Weather forecast API. https://open-meteo.com/en/docs
+OpenStreetMap Foundation. (s. f.). Copyright and license. OpenStreetMap. https://www.openstreetmap.org/copyright
+React Router. (s. f.). React Router. https://reactrouter.com/
+Vite. (s. f.). Getting started. https://vite.dev/guide/
+
+
+
+Link del repositorio: https://github.com/minelyportillo/APPKFC
+VIDEO https://youtu.be/IfZuK3q5SHg
+
