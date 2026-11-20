@@ -28,7 +28,6 @@ export default function CajeroDashboard() {
     updateOrderStatus,
     cancelOrder,
     calculateMetrics,
-    clearCart,
     user
   } = useAuth();
 
