@@ -35,7 +35,7 @@ export function AuthProvider({ children }) {
     if (storedSession) {
       try {
         setUser(JSON.parse(storedSession));
-      } catch (e) {
+      } catch {
         localStorage.removeItem(STORAGE_KEYS.SESSION);
       }
     }
@@ -48,7 +48,7 @@ export function AuthProvider({ children }) {
         const syncedMenu = mergeMenu(JSON.parse(storedMenu));
         setProducts(syncedMenu);
         localStorage.setItem(STORAGE_KEYS.MENU, JSON.stringify(syncedMenu));
-      } catch (e) {
+      } catch {
         setProducts(INITIAL_MENU);
         localStorage.setItem(STORAGE_KEYS.MENU, JSON.stringify(INITIAL_MENU));
       }
@@ -62,7 +62,7 @@ export function AuthProvider({ children }) {
     if (storedOrders) {
       try {
         setOrders(JSON.parse(storedOrders));
-      } catch (e) {
+      } catch {
         const defaultOrders = INITIAL_ORDERS();
         setOrders(defaultOrders);
         localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(defaultOrders));
@@ -78,7 +78,7 @@ export function AuthProvider({ children }) {
       try {
         const parsedCashCuts = JSON.parse(storedCashCuts);
         setCashCuts(Array.isArray(parsedCashCuts) ? parsedCashCuts : []);
-      } catch (e) {
+      } catch {
         localStorage.removeItem(STORAGE_KEYS.CASH_CUTS);
       }
     }
@@ -152,7 +152,7 @@ export function AuthProvider({ children }) {
   const getUsers = () => {
     try {
       return JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS)) || [];
-    } catch (e) {
+    } catch {
       return [];
     }
   };
