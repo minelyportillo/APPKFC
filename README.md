@@ -101,11 +101,8 @@ Las credenciales son públicas, de demostración y se almacenan en el navegador.
 
 <https://appkfc.vercel.app/login>
 
-## Enlace de video
+## Enlace de video, entrega final 
 
-<https://1drv.ms/v/c/f279e39f203ef0af/IQCELoxRUfVTQrZuc9vRX_0iAX4JWANALjeQQy5m2AtkWGs?e=7ijgUH>
-
-## Repositorio y diseño
 
 - **Repositorio público:** <https://github.com/minelyportillo/APPKFC>
 - **Mockups en Figma:** <https://www.figma.com/design/d8LFXN1VTINznG5JJ7nhBE/KFC?node-id=0-1&p=f>
@@ -113,11 +110,6 @@ Las credenciales son públicas, de demostración y se almacenan en el navegador.
 Las imágenes exportadas de los mockups también están disponibles en
 [public/mockups](/C:/Users/minel/OneDrive/Documentos/ciclo%202/DAW/APPKFC-main/APPKFC-main/public/mockups).
 
-## Licencia
-
-Este proyecto se distribuye bajo la licencia
-[Creative Commons Attribution-NoCommercial-ShareAlike 4.0 International](https://creativecommons.org/licenses/by-nc-sa/4.0/).
-Consulta el archivo [LICENSE](LICENSE) para conocer los términos completos.
 
 ## Estructura principal
 
