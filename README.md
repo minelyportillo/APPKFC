@@ -106,6 +106,7 @@ Las credenciales son públicas, de demostración y se almacenan en el navegador.
 
 - **Repositorio público:** <https://github.com/minelyportillo/APPKFC>
 - **Mockups en Figma:** <https://www.figma.com/design/d8LFXN1VTINznG5JJ7nhBE/KFC?node-id=0-1&p=f>
+- **Enlace del video de la defensa:** <https://youtu.be/T_3p_Grvr2U>
 
 Las imágenes exportadas de los mockups también están disponibles en
 [public/mockups](/C:/Users/minel/OneDrive/Documentos/ciclo%202/DAW/APPKFC-main/APPKFC-main/public/mockups).
